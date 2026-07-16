@@ -5,7 +5,7 @@ export async function register(req: Request, res: Response) {
     try {
         const { nome, email, senha } = req.body
 
-        const usuario = await authService.createUser(email, senha)
+        const usuario = await authService.registrar(nome, email, senha)
         res.status(201).json(usuario)
     } catch (error: any) {
         res.status(409).json({ error: error.message })
