@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes";
 import disciplinasRoutes from "./routes/DisciplinasRoutes";
+import trabalhosRoutes from "./routes/TrabalhosRoutes";
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 
 app.use("/auth", authRoutes);
 app.use("/disciplinas", disciplinasRoutes);
+app.use("/trabalhos", trabalhosRoutes);
 
 
 app.get("/", (req, res) => {
