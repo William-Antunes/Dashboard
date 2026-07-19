@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes";
 import disciplinasRoutes from "./routes/DisciplinasRoutes";
 import trabalhosRoutes from "./routes/TrabalhosRoutes";
+import provasRoutes from "./routes/ProvasRoutes";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use("/auth", authRoutes);
 app.use("/disciplinas", disciplinasRoutes);
 app.use("/trabalhos", trabalhosRoutes);
+app.use("/provas", provasRoutes);
 
 
 app.get("/", (req, res) => {
