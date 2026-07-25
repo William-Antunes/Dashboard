@@ -33,6 +33,17 @@ model Disciplina {
 
   trabalhos Trabalho[]
   provas    Prova[]
+  horarios HorarioAula[]
+}
+
+model HorarioAula {
+  id           String     @id @default(uuid())
+  disciplinaId String
+  disciplina   Disciplina @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
+  diaSemana    Int
+  turno        String
+  slotInicio   Int
+  slotFim      Int
 }
 
 model Trabalho {
