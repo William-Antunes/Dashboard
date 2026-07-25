@@ -20,3 +20,8 @@ export async function login(email: string, senha: string): Promise<loginResposta
     const resposta = await api.post("/auth/login", { email, senha });
     return resposta.data
 }
+
+export async function me(): Promise<usuarioRegistrado> {
+  const resposta = await api.get("/auth/me");
+  return resposta.data;
+}

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import * as authService from "../services/auth";
 
 interface Usuario {
@@ -9,37 +9,53 @@ interface Usuario {
 
 interface AuthContextType {
   usuario: Usuario | null;
+  carregando: boolean;
   login: (email: string, senha: string) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function usuarioSalvo(): Usuario | null {
-  const usuarioTexto = localStorage.getItem("usuario");
-  return usuarioTexto ? JSON.parse(usuarioTexto) : null;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [usuario, setUsuario] = useState<Usuario | null>(usuarioSalvo());
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    async function confirmarSessao() {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setCarregando(false);
+        return;
+      }
+
+      try {
+        const dadosUsuario = await authService.me();
+        setUsuario(dadosUsuario);
+      } catch {
+        localStorage.removeItem("token");
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    confirmarSessao();
+  }, []);
 
   async function login(email: string, senha: string) {
     const resposta = await authService.login(email, senha);
 
     localStorage.setItem("token", resposta.token);
-    localStorage.setItem("usuario", JSON.stringify(resposta.usuario));
-
     setUsuario(resposta.usuario);
   }
 
   function logout() {
     localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
     setUsuario(null);
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, login, logout }}>
+    <AuthContext.Provider value={{ usuario, carregando, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
