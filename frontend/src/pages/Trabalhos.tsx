@@ -134,7 +134,7 @@ export default function Trabalhos() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-2xl font-semibold text-white mb-6">Trabalhos</h1>
 
       <div className="mb-6">
@@ -160,8 +160,8 @@ export default function Trabalhos() {
       ) : trabalhos.length === 0 ? (
         <p className="text-gray-400 mb-8">Nenhum trabalho cadastrado.</p>
       ) : (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden mb-8">
-          <table className="w-full text-sm">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-x-auto mb-8">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-gray-700 text-left text-gray-400">
                 <th className="px-4 py-3 font-medium">Título</th>
@@ -231,7 +231,7 @@ export default function Trabalhos() {
           {trabalhoEditando ? "Editar trabalho" : "Novo trabalho"}
         </h2>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-gray-300 mb-1">
               Disciplina
@@ -284,9 +284,11 @@ export default function Trabalhos() {
             />
           </div>
 
-          {erro && <p className="col-span-2 text-sm text-red-400">{erro}</p>}
+          {erro && (
+            <p className="col-span-1 sm:col-span-2 text-sm text-red-400">{erro}</p>
+          )}
 
-          <div className="col-span-2 flex gap-3">
+          <div className="col-span-1 sm:col-span-2 flex gap-3">
             <button
               type="submit"
               className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors"

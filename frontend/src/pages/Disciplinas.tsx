@@ -93,7 +93,7 @@ export default function Disciplinas() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-2xl font-semibold text-white mb-6">Disciplinas</h1>
 
       <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
@@ -101,7 +101,7 @@ export default function Disciplinas() {
           {disciplinaEditando ? "Editar disciplina" : "Nova disciplina"}
         </h2>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm text-gray-300 mb-1">Nome</label>
             <input
@@ -132,9 +132,11 @@ export default function Disciplinas() {
             />
           </div>
 
-          {erro && <p className="col-span-3 text-sm text-red-400">{erro}</p>}
+          {erro && (
+            <p className="col-span-1 sm:col-span-3 text-sm text-red-400">{erro}</p>
+          )}
 
-          <div className="col-span-3 flex gap-3">
+          <div className="col-span-1 sm:col-span-3 flex gap-3">
             <button
               type="submit"
               className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors"
@@ -160,7 +162,7 @@ export default function Disciplinas() {
       ) : disciplinas.length === 0 ? (
         <p className="text-gray-400">Nenhuma disciplina cadastrada ainda.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {disciplinas.map((disciplina) => (
             <div
               key={disciplina.id}

@@ -32,7 +32,7 @@ export default function NovoTrabalho() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-6 py-8">
+    <div className="max-w-md mx-auto px-4 sm:px-6 py-8">
       <Link
         to={`/disciplinas/${id}`}
         className="text-sm text-gray-400 hover:text-white mb-4 inline-block"

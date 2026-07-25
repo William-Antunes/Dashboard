@@ -96,13 +96,13 @@ export default function Home() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-2xl font-semibold text-white mb-1">
         {saudacaoPorHorario()}, {usuario?.nome}
       </h1>
       <p className="text-gray-400 mb-6">Aqui está o resumo da sua semana</p>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-gray-800 rounded-lg p-4">
           <p className="text-sm text-gray-400 mb-1">Trabalhos pendentes</p>
           <p className="text-2xl font-semibold text-white">
@@ -177,7 +177,7 @@ export default function Home() {
           </Link>
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {disciplinas.map((disciplina) => {
             const pendencias = contarPendenciasDaDisciplina(disciplina.id);
 

@@ -86,7 +86,7 @@ export default function DisciplinaDetalhes() {
 
   if (erro) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <p className="text-red-400 mb-4">{erro}</p>
         <Link to="/disciplinas" className="text-blue-400 hover:text-blue-300">
           Voltar para Disciplinas
@@ -96,7 +96,7 @@ export default function DisciplinaDetalhes() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <Link
         to="/disciplinas"
         className="text-sm text-gray-400 hover:text-white mb-4 inline-block"
@@ -115,7 +115,7 @@ export default function DisciplinaDetalhes() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-medium text-white">Trabalhos</h2>
