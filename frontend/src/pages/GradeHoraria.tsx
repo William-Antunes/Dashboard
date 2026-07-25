@@ -91,7 +91,7 @@ export default function GradeHoraria() {
       <h1 className="text-2xl font-semibold text-white mb-6">Grade Horária</h1>
 
       <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-x-auto">
-        <table className="w-full text-sm min-w-[700px]">
+        <table className="w-full table-fixed text-sm min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-700 text-gray-400">
               <th className="px-3 py-2 text-left">Horário</th>
