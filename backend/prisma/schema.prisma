@@ -42,7 +42,7 @@ model Trabalho {
   dataEntrega  DateTime
   status       String     @default("pendente") // pendente | concluido
   disciplinaId String
-  disciplina   Disciplina @relation(fields: [disciplinaId], references: [id])
+  disciplina   Disciplina @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
 }
 
 model Prova {
@@ -50,5 +50,5 @@ model Prova {
   nome         String
   data         DateTime
   disciplinaId String
-  disciplina   Disciplina @relation(fields: [disciplinaId], references: [id])
+  disciplina   Disciplina @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
 }
