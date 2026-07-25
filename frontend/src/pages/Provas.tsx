@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import * as disciplinasService from "../services/disciplinas";
 import * as provasService from "../services/provas";
 
