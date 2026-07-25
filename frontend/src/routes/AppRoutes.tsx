@@ -9,7 +9,7 @@ import Trabalhos from "../pages/Trabalhos";
 import Provas from "../pages/Provas";
 import NovaProva from "../pages/NovaProva";
 import NovoTrabalho from "../pages/NovoTrabalho";
-
+import GradeHoraria from "../pages/GradeHoraria";
 
 
 export default function AppRoutes() {
@@ -26,6 +26,7 @@ export default function AppRoutes() {
                 <Route path="/disciplinas/:id/provas/novo" element={<NovaProva />} />
                 <Route path="/trabalhos" element={<Trabalhos />} />
                 <Route path="/provas" element={<Provas />} />
+                <Route path="/grade-horaria" element={<GradeHoraria />} />
             </Route>
         </Routes>
     )

@@ -23,6 +23,9 @@ export default function Navbar() {
           <Link to="/provas" className="text-sm text-gray-400 hover:text-blue-400">
             Provas
           </Link>
+          <Link to="/grade-horaria" className="text-sm text-gray-400 hover:text-blue-400">
+            Grade Horária
+          </Link>
         </div>
 
         <div className="hidden sm:flex items-center gap-3">
@@ -68,6 +71,13 @@ export default function Navbar() {
             className="text-sm text-gray-300 py-2"
           >
             Provas
+          </Link>
+          <Link
+            to="/grade-horaria"
+            onClick={() => setMenuAberto(false)}
+            className="text-sm text-gray-300 py-2"
+          >
+            Grade Horária
           </Link>
           <div className="border-t border-gray-800 mt-2 pt-2 flex items-center justify-between">
             <span className="text-sm text-gray-400">Olá, {usuario?.nome}</span>
