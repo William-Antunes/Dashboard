@@ -64,3 +64,18 @@ export async function login(email: string, senha: string) {
     },
   };
 }
+
+export async function buscarPorId(usuarioId: string){
+  const usuario = await prisma.usuario.findUnique({
+    where: { id: usuarioId },
+  });
+  
+  if (!usuario) {
+    throw new Error("Usuário não encontrado");
+  }
+  return {
+    id: usuario.id,
+    nome: usuario.nome,
+    email: usuario.email,
+  }
+}

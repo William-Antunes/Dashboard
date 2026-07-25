@@ -108,14 +108,17 @@ export default function Provas() {
   }
 
   return (
-    <div>
-      <h1>Provas</h1>
+    <div className="max-w-5xl mx-auto px-6 py-8">
+      <h1 className="text-2xl font-semibold text-white mb-6">Provas</h1>
 
-      <div>
-        <label>Filtrar por disciplina</label>
+      <div className="mb-6">
+        <label className="block text-sm text-gray-300 mb-1">
+          Filtrar por disciplina
+        </label>
         <select
           value={filtroDisciplinaId}
           onChange={(evento) => setFiltroDisciplinaId(evento.target.value)}
+          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
         >
           <option value="">Todas as disciplinas</option>
           {disciplinas.map((disciplina) => (
@@ -127,82 +130,122 @@ export default function Provas() {
       </div>
 
       {carregando ? (
-        <p>Carregando...</p>
+        <p className="text-gray-400 mb-8">Carregando...</p>
+      ) : provas.length === 0 ? (
+        <p className="text-gray-400 mb-8">Nenhuma prova cadastrada.</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Disciplina</th>
-              <th>Data</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {provas.map((prova) => (
-              <tr key={prova.id}>
-                <td>{prova.nome}</td>
-                <td>{nomeDaDisciplina(prova.disciplinaId)}</td>
-                <td>{new Date(prova.data).toLocaleDateString()}</td>
-                <td>
-                  <button onClick={() => iniciarEdicao(prova)}>Editar</button>
-                  <button onClick={() => handleExcluir(prova.id)}>
-                    Excluir
-                  </button>
-                </td>
+        <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden mb-8">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-700 text-left text-gray-400">
+                <th className="px-4 py-3 font-medium">Nome</th>
+                <th className="px-4 py-3 font-medium">Disciplina</th>
+                <th className="px-4 py-3 font-medium">Data</th>
+                <th className="px-4 py-3 font-medium">Ações</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {provas.map((prova) => (
+                <tr
+                  key={prova.id}
+                  className="border-b border-gray-700 last:border-0"
+                >
+                  <td className="px-4 py-3 text-white">{prova.nome}</td>
+                  <td className="px-4 py-3 text-gray-400">
+                    {nomeDaDisciplina(prova.disciplinaId)}
+                  </td>
+                  <td className="px-4 py-3 text-gray-400">
+                    {new Date(prova.data).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => iniciarEdicao(prova)}
+                        className="text-gray-400 hover:text-white"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleExcluir(prova.id)}
+                        className="text-gray-400 hover:text-red-400"
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      <h2>{provaEditando ? "Editar prova" : "Nova prova"}</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Disciplina</label>
-          <select
-            value={disciplinaId}
-            onChange={(evento) => setDisciplinaId(evento.target.value)}
-          >
-            <option value="">Selecione uma disciplina</option>
-            {disciplinas.map((disciplina) => (
-              <option key={disciplina.id} value={disciplina.id}>
-                {disciplina.nome}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+        <h2 className="text-base font-medium text-white mb-4">
+          {provaEditando ? "Editar prova" : "Nova prova"}
+        </h2>
 
-        <div>
-          <label>Nome</label>
-          <input
-            type="text"
-            value={nome}
-            onChange={(evento) => setNome(evento.target.value)}
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">
+              Disciplina
+            </label>
+            <select
+              value={disciplinaId}
+              onChange={(evento) => setDisciplinaId(evento.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="">Selecione uma disciplina</option>
+              {disciplinas.map((disciplina) => (
+                <option key={disciplina.id} value={disciplina.id}>
+                  {disciplina.nome}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label>Data</label>
-          <input
-            type="date"
-            value={data}
-            onChange={(evento) => setData(evento.target.value)}
-          />
-        </div>
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Nome</label>
+            <input
+              type="text"
+              value={nome}
+              onChange={(evento) => setNome(evento.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+          </div>
 
-        {erro && <p>{erro}</p>}
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Data</label>
+            <input
+              type="date"
+              value={data}
+              onChange={(evento) => setData(evento.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+            />
+          </div>
 
-        <button type="submit">
-          {provaEditando ? "Salvar alterações" : "Criar prova"}
-        </button>
+          {erro && <p className="col-span-3 text-sm text-red-400">{erro}</p>}
 
-        {provaEditando && (
-          <button type="button" onClick={cancelarEdicao}>
-            Cancelar
-          </button>
-        )}
-      </form>
+          <div className="col-span-3 flex gap-3">
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              {provaEditando ? "Salvar alterações" : "Criar prova"}
+            </button>
+
+            {provaEditando && (
+              <button
+                type="button"
+                onClick={cancelarEdicao}
+                className="text-gray-400 hover:text-white px-4 py-2"
+              >
+                Cancelar
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
