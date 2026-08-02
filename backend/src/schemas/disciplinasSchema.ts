@@ -12,10 +12,14 @@ export const disciplinaComHorariosSchema = z.object({
   professor: z.string().optional(),
   cor: z.string().optional(),
   periodo: z.string().optional(),
+  cargaHoraria: z.number().int().positive("Carga horária inválida"),
   horarios: z.array(horarioSchema).optional(),
 });
 
 export const concluirDisciplina = z.object({
   notaFinal: z.number().min(0, "Nota invalida").max(10, "Nota invalida"),
-  cargaHoraria: z.number().int().positive("Carga horaria invalida")
-})
+});
+
+export const registrarFaltaSchema = z.object({
+  delta: z.number().int("Delta inválido"),
+});

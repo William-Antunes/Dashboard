@@ -46,8 +46,8 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-800">
-      <div className="flex items-center justify-between px-6 py-3">
+    <nav className="relative bg-gray-900 border-b border-gray-800">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3">
         <Link to="/" className="font-semibold text-white">
           Dashboard
         </Link>
@@ -114,38 +114,38 @@ export default function Navbar() {
       </div>
 
       {menuAberto && (
-        <div className="sm:hidden flex flex-col gap-1 px-6 pb-4">
+        <div className="sm:hidden absolute top-full left-0 right-0 z-20 flex flex-col gap-1 px-4 py-3 bg-gray-900 border-b border-gray-800 shadow-lg">
           <Link
             to="/disciplinas"
             onClick={() => setMenuAberto(false)}
-            className="text-sm text-gray-300 py-2"
+            className="text-sm text-gray-300 py-2.5 px-2 rounded hover:bg-gray-800 active:bg-gray-800"
           >
             Disciplinas
           </Link>
           <Link
             to="/trabalhos"
             onClick={() => setMenuAberto(false)}
-            className="text-sm text-gray-300 py-2"
+            className="text-sm text-gray-300 py-2.5 px-2 rounded hover:bg-gray-800 active:bg-gray-800"
           >
             Trabalhos
           </Link>
           <Link
             to="/provas"
             onClick={() => setMenuAberto(false)}
-            className="text-sm text-gray-300 py-2"
+            className="text-sm text-gray-300 py-2.5 px-2 rounded hover:bg-gray-800 active:bg-gray-800"
           >
             Provas
           </Link>
           <Link
             to="/grade-horaria"
             onClick={() => setMenuAberto(false)}
-            className="text-sm text-gray-300 py-2"
+            className="text-sm text-gray-300 py-2.5 px-2 rounded hover:bg-gray-800 active:bg-gray-800"
           >
             Grade Horária
           </Link>
-          <div className="border-t border-gray-800 mt-2 pt-2 flex items-center justify-between">
-            <span className="text-sm text-gray-400">Olá, {usuario?.nome}</span>
-            <button onClick={logout} className="text-sm text-red-400">
+          <div className="border-t border-gray-800 mt-2 pt-3 px-2 flex items-center justify-between">
+            <span className="text-sm text-gray-400 truncate">Olá, {usuario?.nome}</span>
+            <button onClick={logout} className="text-sm text-red-400 shrink-0 ml-3">
               Sair
             </button>
           </div>

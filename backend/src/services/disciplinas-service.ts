@@ -21,6 +21,7 @@ export async function criar(
   professor: string | undefined,
   cor: string | undefined,
   periodo: string | undefined,
+  cargaHoraria: number,
   horarios: Horario[] | undefined
 ) {
   const disciplina = await prisma.disciplina.create({
@@ -29,6 +30,7 @@ export async function criar(
       professor,
       cor,
       periodo,
+      cargaHoraria,
       usuarioId,
       horarios: horarios ? { create: horarios } : undefined,
     },
@@ -53,13 +55,13 @@ export async function listar(usuarioId: string, status?: string) {
   return disciplinas;
 }
 
-export async function concluir(usuarioId: string, id: string, notaFinal: number, cargaHoraria: number){
+export async function concluir(usuarioId: string, id: string, notaFinal: number){
   const disciplina = await prisma.disciplina.findUnique({
     where: { id },
   })
   if (!disciplina)
     throw new Error("Disciplina não encontrada")
-  
+
   if (disciplina.usuarioId !== usuarioId)
     throw new Error("Você não tem permissão pra concluir essa disciplina")
 
@@ -67,12 +69,37 @@ export async function concluir(usuarioId: string, id: string, notaFinal: number,
     where: {id},
     data: {
       status: "concluida",
-      notaFinal,
-      cargaHoraria
+      notaFinal
     }
   })
 
-  return disciplinaAtualizada  
+  return disciplinaAtualizada
+}
+
+export async function registrarFalta(usuarioId: string, id: string, delta: number) {
+  const disciplina = await prisma.disciplina.findUnique({
+    where: { id },
+  });
+
+  if (!disciplina) {
+    throw new Error("Disciplina não encontrada");
+  }
+
+  if (disciplina.usuarioId !== usuarioId) {
+    throw new Error("Você não tem permissão para registrar falta nessa disciplina");
+  }
+
+  const disciplinaAtualizada = await prisma.disciplina.update({
+    where: { id },
+    data: {
+      faltas: Math.max(0, disciplina.faltas + delta),
+    },
+    include: {
+      horarios: true,
+    },
+  });
+
+  return disciplinaAtualizada;
 }
 
 export async function editar(
@@ -82,6 +109,7 @@ export async function editar(
   professor: string | undefined,
   cor: string | undefined,
   periodo: string | undefined,
+  cargaHoraria: number,
   horarios: Horario[] | undefined
 ) {
   const disciplina = await prisma.disciplina.findUnique({
@@ -109,6 +137,7 @@ export async function editar(
       professor,
       cor,
       periodo,
+      cargaHoraria,
       horarios: horarios ? { create: horarios } : undefined,
     },
     include: {

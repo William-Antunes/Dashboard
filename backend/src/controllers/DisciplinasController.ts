@@ -4,7 +4,7 @@ import { RequestComUsuario } from "../middleware/AuthMiddleware";
 
 export async function criar(req: RequestComUsuario, res: Response) {
   try {
-    const { nome, professor, cor, periodo, horarios } = req.body;
+    const { nome, professor, cor, periodo, cargaHoraria, horarios } = req.body;
     const usuarioId = req.usuarioId as string;
 
     const disciplina = await disciplinasService.criar(
@@ -13,6 +13,7 @@ export async function criar(req: RequestComUsuario, res: Response) {
       professor,
       cor,
       periodo,
+      cargaHoraria,
       horarios
     );
 
@@ -38,7 +39,7 @@ export async function listar(req: RequestComUsuario, res: Response) {
 export async function editar(req: RequestComUsuario, res: Response) {
   try {
     const { id } = req.params;
-    const { nome, professor, cor, periodo, horarios } = req.body;
+    const { nome, professor, cor, periodo, cargaHoraria, horarios } = req.body;
     const usuarioId = req.usuarioId as string;
 
     const disciplina = await disciplinasService.editar(
@@ -48,6 +49,7 @@ export async function editar(req: RequestComUsuario, res: Response) {
       professor,
       cor,
       periodo,
+      cargaHoraria,
       horarios
     );
 
@@ -73,14 +75,30 @@ export async function excluir(req: RequestComUsuario, res: Response) {
 export async function concluir(req: RequestComUsuario, res: Response){
   try{
     const {id} = req.params
-    const {notaFinal, cargaHoraria} = req.body
+    const {notaFinal} = req.body
     const usuarioId = req.usuarioId as string
 
     const disciplina = await disciplinasService.concluir(
       usuarioId,
       id,
-      notaFinal,
-      cargaHoraria
+      notaFinal
+    )
+    res.status(200).json(disciplina)
+  }catch(error: any){
+    res.status(403).json({mensagem: error.message})
+  }
+}
+
+export async function registrarFalta(req: RequestComUsuario, res: Response){
+  try{
+    const {id} = req.params
+    const {delta} = req.body
+    const usuarioId = req.usuarioId as string
+
+    const disciplina = await disciplinasService.registrarFalta(
+      usuarioId,
+      id,
+      delta
     )
     res.status(200).json(disciplina)
   }catch(error: any){

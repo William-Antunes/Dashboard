@@ -2,7 +2,7 @@ import { Router } from "express";
 import * as disciplinasController from "../controllers/DisciplinasController";
 import { autenticar } from "../middleware/AuthMiddleware";
 import { validar } from "../middleware/validacaoMiddleware";
-import { disciplinaComHorariosSchema, concluirDisciplina } from "../schemas/disciplinasSchema";
+import { disciplinaComHorariosSchema, concluirDisciplina, registrarFaltaSchema } from "../schemas/disciplinasSchema";
 
 
 const router = Router();
@@ -11,6 +11,7 @@ router.post("/", autenticar, validar(disciplinaComHorariosSchema), disciplinasCo
 router.get("/", autenticar, disciplinasController.listar);
 router.put("/:id", autenticar, validar(disciplinaComHorariosSchema), disciplinasController.editar);
 router.patch("/:id/concluir", autenticar, validar(concluirDisciplina), disciplinasController.concluir)
+router.patch("/:id/faltas", autenticar, validar(registrarFaltaSchema), disciplinasController.registrarFalta)
 router.delete("/:id", autenticar, disciplinasController.excluir);
 
 

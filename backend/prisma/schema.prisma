@@ -31,7 +31,8 @@ model Disciplina {
   usuarioId String
   status   String   @default("cursando")
   notaFinal Float?
-  cargaHoraria Int? 
+  cargaHoraria Int?
+  faltas   Int      @default(0)
   usuario   Usuario  @relation(fields: [usuarioId], references: [id])
 
   trabalhos Trabalho[]
