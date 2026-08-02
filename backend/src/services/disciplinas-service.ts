@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaClient } from "../../generated/prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
+import process = require("node:process");
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -39,15 +40,39 @@ export async function criar(
   return disciplina;
 }
 
-export async function listar(usuarioId: string) {
+export async function listar(usuarioId: string, status?: string) {
   const disciplinas = await prisma.disciplina.findMany({
-    where: { usuarioId },
+    where: { usuarioId,
+      ...(status ? {status}: {})
+     },
     include: {
       horarios: true,
     },
   });
 
   return disciplinas;
+}
+
+export async function concluir(usuarioId: string, id: string, notaFinal: number, cargaHoraria: number){
+  const disciplina = await prisma.disciplina.findUnique({
+    where: { id },
+  })
+  if (!disciplina)
+    throw new Error("Disciplina não encontrada")
+  
+  if (disciplina.usuarioId !== usuarioId)
+    throw new Error("Você não tem permissão pra concluir essa disciplina")
+
+  const disciplinaAtualizada = await prisma.disciplina.update({
+    where: {id},
+    data: {
+      status: "concluida",
+      notaFinal,
+      cargaHoraria
+    }
+  })
+
+  return disciplinaAtualizada  
 }
 
 export async function editar(

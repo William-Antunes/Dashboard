@@ -15,6 +15,9 @@ interface Disciplina {
   professor: string | null;
   cor: string;
   periodo: string | null;
+  status: string;
+  notaFinal: number | null;
+  cargaHoraria: number | null;
   usuarioId: string;
   horarios: Horario[];
 }
@@ -41,6 +44,7 @@ function horarioVazio(): Horario {
 }
 
 export default function Disciplinas() {
+  const [aba, setAba] = useState<"cursando" | "concluida">("cursando");
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [nome, setNome] = useState("");
   const [professor, setProfessor] = useState("");
@@ -51,14 +55,18 @@ export default function Disciplinas() {
   const [disciplinaEditando, setDisciplinaEditando] = useState<Disciplina | null>(
     null
   );
+  const [concluindoId, setConcluindoId] = useState<string | null>(null);
+  const [notaFinal, setNotaFinal] = useState("");
+  const [cargaHoraria, setCargaHoraria] = useState("");
 
   useEffect(() => {
     carregarDisciplinas();
-  }, []);
+  }, [aba]);
 
   async function carregarDisciplinas() {
+    setCarregando(true);
     try {
-      const dados = await disciplinasService.listar();
+      const dados = await disciplinasService.listar(aba);
       setDisciplinas(dados);
     } catch {
       setErro("Não foi possível carregar as disciplinas");
@@ -146,6 +154,29 @@ export default function Disciplinas() {
     }
   }
 
+  function iniciarConclusao(id: string) {
+    setConcluindoId(id);
+    setNotaFinal("");
+    setCargaHoraria("");
+  }
+
+  function cancelarConclusao() {
+    setConcluindoId(null);
+  }
+
+  async function handleConcluir(id: string) {
+    try {
+      await disciplinasService.concluir(id, {
+        notaFinal: Number(notaFinal),
+        cargaHoraria: Number(cargaHoraria),
+      });
+      setConcluindoId(null);
+      carregarDisciplinas();
+    } catch {
+      setErro("Não foi possível concluir a disciplina");
+    }
+  }
+
   function formatarHorario(h: Horario): string {
     const dia = DIAS.find((d) => d.valor === h.diaSemana)?.nome || "";
     const turno = TURNOS.find((t) => t.valor === h.turno)?.nome || "";
@@ -160,165 +191,198 @@ export default function Disciplinas() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-2xl font-semibold text-white mb-6">Disciplinas</h1>
 
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
-        <h2 className="text-base font-medium text-white mb-4">
-          {disciplinaEditando ? "Editar disciplina" : "Nova disciplina"}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm text-gray-300 mb-1">Nome</label>
-              <input
-                type="text"
-                value={nome}
-                onChange={(evento) => setNome(evento.target.value)}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-300 mb-1">Professor</label>
-              <input
-                type="text"
-                value={professor}
-                onChange={(evento) => setProfessor(evento.target.value)}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-300 mb-1">Período</label>
-              <input
-                type="text"
-                value={periodo}
-                onChange={(evento) => setPeriodo(evento.target.value)}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm text-gray-300">Horários</label>
-              <button
-                type="button"
-                onClick={adicionarHorario}
-                className="text-sm text-blue-400 hover:text-blue-300"
-              >
-                + Adicionar horário
-              </button>
-            </div>
-
-            {horarios.length === 0 && (
-              <p className="text-sm text-gray-500">Nenhum horário adicionado.</p>
-            )}
-
-            <div className="flex flex-col gap-2">
-              {horarios.map((horario, index) => (
-                <div
-                  key={index}
-                  className="flex flex-wrap items-center gap-2 bg-gray-900 border border-gray-700 rounded-lg p-3"
-                >
-                  <select
-                    value={horario.diaSemana}
-                    onChange={(evento) =>
-                      atualizarHorario(index, "diaSemana", Number(evento.target.value))
-                    }
-                    className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white"
-                  >
-                    {DIAS.map((dia) => (
-                      <option key={dia.valor} value={dia.valor}>
-                        {dia.nome}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={horario.turno}
-                    onChange={(evento) =>
-                      atualizarHorario(index, "turno", evento.target.value)
-                    }
-                    className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white"
-                  >
-                    {TURNOS.map((turno) => (
-                      <option key={turno.valor} value={turno.valor}>
-                        {turno.nome}
-                      </option>
-                    ))}
-                  </select>
-
-                  <span className="text-sm text-gray-400">do</span>
-
-                  <select
-                    value={horario.slotInicio}
-                    onChange={(evento) =>
-                      atualizarHorario(index, "slotInicio", Number(evento.target.value))
-                    }
-                    className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white"
-                  >
-                    {SLOTS.map((slot) => (
-                      <option key={slot} value={slot}>
-                        {slot}º
-                      </option>
-                    ))}
-                  </select>
-
-                  <span className="text-sm text-gray-400">ao</span>
-
-                  <select
-                    value={horario.slotFim}
-                    onChange={(evento) =>
-                      atualizarHorario(index, "slotFim", Number(evento.target.value))
-                    }
-                    className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white"
-                  >
-                    {SLOTS.map((slot) => (
-                      <option key={slot} value={slot}>
-                        {slot}º
-                      </option>
-                    ))}
-                  </select>
-
-                  <button
-                    type="button"
-                    onClick={() => removerHorario(index)}
-                    className="text-sm text-red-400 hover:text-red-300 ml-auto"
-                  >
-                    Remover
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {erro && <p className="text-sm text-red-400">{erro}</p>}
-
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              {disciplinaEditando ? "Salvar alterações" : "Adicionar disciplina"}
-            </button>
-
-            {disciplinaEditando && (
-              <button
-                type="button"
-                onClick={cancelarEdicao}
-                className="text-gray-400 hover:text-white px-4 py-2"
-              >
-                Cancelar
-              </button>
-            )}
-          </div>
-        </form>
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setAba("cursando")}
+          className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
+            aba === "cursando"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-800 text-gray-400 hover:text-white"
+          }`}
+        >
+          Cursando
+        </button>
+        <button
+          onClick={() => setAba("concluida")}
+          className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
+            aba === "concluida"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-800 text-gray-400 hover:text-white"
+          }`}
+        >
+          Concluídas
+        </button>
       </div>
+
+      {aba === "cursando" && (
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
+          <h2 className="text-base font-medium text-white mb-4">
+            {disciplinaEditando ? "Editar disciplina" : "Nova disciplina"}
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Nome</label>
+                <input
+                  type="text"
+                  value={nome}
+                  onChange={(evento) => setNome(evento.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Professor</label>
+                <input
+                  type="text"
+                  value={professor}
+                  onChange={(evento) => setProfessor(evento.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Período</label>
+                <input
+                  type="text"
+                  value={periodo}
+                  onChange={(evento) => setPeriodo(evento.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm text-gray-300">Horários</label>
+                <button
+                  type="button"
+                  onClick={adicionarHorario}
+                  className="text-sm text-blue-400 hover:text-blue-300"
+                >
+                  + Adicionar horário
+                </button>
+              </div>
+
+              {horarios.length === 0 && (
+                <p className="text-sm text-gray-500">Nenhum horário adicionado.</p>
+              )}
+
+              <div className="flex flex-col gap-2">
+                {horarios.map((horario, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-wrap items-center gap-2 bg-gray-900 border border-gray-700 rounded-lg p-3"
+                  >
+                    <select
+                      value={horario.diaSemana}
+                      onChange={(evento) =>
+                        atualizarHorario(index, "diaSemana", Number(evento.target.value))
+                      }
+                      className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white"
+                    >
+                      {DIAS.map((dia) => (
+                        <option key={dia.valor} value={dia.valor}>
+                          {dia.nome}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={horario.turno}
+                      onChange={(evento) =>
+                        atualizarHorario(index, "turno", evento.target.value)
+                      }
+                      className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white"
+                    >
+                      {TURNOS.map((turno) => (
+                        <option key={turno.valor} value={turno.valor}>
+                          {turno.nome}
+                        </option>
+                      ))}
+                    </select>
+
+                    <span className="text-sm text-gray-400">do</span>
+
+                    <select
+                      value={horario.slotInicio}
+                      onChange={(evento) =>
+                        atualizarHorario(index, "slotInicio", Number(evento.target.value))
+                      }
+                      className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white"
+                    >
+                      {SLOTS.map((slot) => (
+                        <option key={slot} value={slot}>
+                          {slot}º
+                        </option>
+                      ))}
+                    </select>
+
+                    <span className="text-sm text-gray-400">ao</span>
+
+                    <select
+                      value={horario.slotFim}
+                      onChange={(evento) =>
+                        atualizarHorario(index, "slotFim", Number(evento.target.value))
+                      }
+                      className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white"
+                    >
+                      {SLOTS.map((slot) => (
+                        <option key={slot} value={slot}>
+                          {slot}º
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={() => removerHorario(index)}
+                      className="text-sm text-red-400 hover:text-red-300 ml-auto"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {erro && <p className="text-sm text-red-400">{erro}</p>}
+
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                {disciplinaEditando ? "Salvar alterações" : "Adicionar disciplina"}
+              </button>
+
+              {disciplinaEditando && (
+                <button
+                  type="button"
+                  onClick={cancelarEdicao}
+                  className="text-gray-400 hover:text-white px-4 py-2"
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      )}
+
+      {erro && aba === "concluida" && (
+        <p className="text-sm text-red-400 mb-4">{erro}</p>
+      )}
 
       {carregando ? (
         <p className="text-gray-400">Carregando...</p>
       ) : disciplinas.length === 0 ? (
-        <p className="text-gray-400">Nenhuma disciplina cadastrada ainda.</p>
+        <p className="text-gray-400">
+          {aba === "cursando"
+            ? "Nenhuma disciplina cadastrada ainda."
+            : "Nenhuma disciplina concluída ainda."}
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {disciplinas.map((disciplina) => (
@@ -338,23 +402,41 @@ export default function Disciplinas() {
                 {disciplina.periodo || "Período não informado"}
               </p>
 
-              {disciplina.horarios.length > 0 && (
-                <div className="mt-2 flex flex-col gap-1">
-                  {disciplina.horarios.map((h, i) => (
-                    <p key={i} className="text-xs text-gray-500">
-                      {formatarHorario(h)}
-                    </p>
-                  ))}
-                </div>
+              {aba === "concluida" ? (
+                <p className="text-sm text-gray-300 mt-2">
+                  Nota final:{" "}
+                  <span className="text-white font-medium">{disciplina.notaFinal}</span>
+                  {" · "}Carga horária: {disciplina.cargaHoraria}h
+                </p>
+              ) : (
+                disciplina.horarios.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1">
+                    {disciplina.horarios.map((h, i) => (
+                      <p key={i} className="text-xs text-gray-500">
+                        {formatarHorario(h)}
+                      </p>
+                    ))}
+                  </div>
+                )
               )}
 
               <div className="flex gap-3 mt-3">
-                <button
-                  onClick={() => iniciarEdicao(disciplina)}
-                  className="text-sm text-gray-400 hover:text-white"
-                >
-                  Editar
-                </button>
+                {aba === "cursando" && (
+                  <>
+                    <button
+                      onClick={() => iniciarEdicao(disciplina)}
+                      className="text-sm text-gray-400 hover:text-white"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => iniciarConclusao(disciplina.id)}
+                      className="text-sm text-gray-400 hover:text-green-400"
+                    >
+                      Concluir
+                    </button>
+                  </>
+                )}
                 <button
                   onClick={() => handleExcluir(disciplina.id)}
                   className="text-sm text-gray-400 hover:text-red-400"
@@ -362,6 +444,41 @@ export default function Disciplinas() {
                   Excluir
                 </button>
               </div>
+
+              {concluindoId === disciplina.id && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 bg-gray-900 border border-gray-700 rounded-lg p-3">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="10"
+                    placeholder="Nota final"
+                    value={notaFinal}
+                    onChange={(evento) => setNotaFinal(evento.target.value)}
+                    className="w-28 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Carga horária"
+                    value={cargaHoraria}
+                    onChange={(evento) => setCargaHoraria(evento.target.value)}
+                    className="w-32 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    onClick={() => handleConcluir(disciplina.id)}
+                    className="text-sm text-green-400 hover:text-green-300"
+                  >
+                    Confirmar
+                  </button>
+                  <button
+                    onClick={cancelarConclusao}
+                    className="text-sm text-gray-400 hover:text-white"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

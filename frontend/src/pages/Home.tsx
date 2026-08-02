@@ -54,7 +54,7 @@ export default function Home() {
     async function carregarTudo() {
       try {
         const [dadosDisciplinas, dadosTrabalhos, dadosProvas] = await Promise.all([
-          disciplinasService.listar(),
+          disciplinasService.listar("cursando"),
           trabalhosService.listar(),
           provasService.listar(),
         ]);

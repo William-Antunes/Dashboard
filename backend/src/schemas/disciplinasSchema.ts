@@ -14,3 +14,8 @@ export const disciplinaComHorariosSchema = z.object({
   periodo: z.string().optional(),
   horarios: z.array(horarioSchema).optional(),
 });
+
+export const concluirDisciplina = z.object({
+  notaFinal: z.number().min(0, "Nota invalida").max(10, "Nota invalida"),
+  cargaHoraria: z.number().int().positive("Carga horaria invalida")
+})

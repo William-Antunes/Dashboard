@@ -29,6 +29,9 @@ model Disciplina {
   cor       String   @default("#3b82f6")
   periodo   String?
   usuarioId String
+  status   String   @default("cursando")
+  notaFinal Float?
+  cargaHoraria Int? 
   usuario   Usuario  @relation(fields: [usuarioId], references: [id])
 
   trabalhos Trabalho[]

@@ -26,7 +26,8 @@ export async function listar(req: RequestComUsuario, res: Response) {
   try {
     const usuarioId = req.usuarioId as string;
 
-    const disciplinas = await disciplinasService.listar(usuarioId);
+    const status = req.query.status as string | undefined
+    const disciplinas = await disciplinasService.listar(usuarioId, status);
 
     res.status(200).json(disciplinas);
   } catch (erro: any) {
@@ -66,5 +67,23 @@ export async function excluir(req: RequestComUsuario, res: Response) {
     res.status(204).send();
   } catch (erro: any) {
     res.status(403).json({ mensagem: erro.message });
+  }
+}
+
+export async function concluir(req: RequestComUsuario, res: Response){
+  try{
+    const {id} = req.params
+    const {notaFinal, cargaHoraria} = req.body
+    const usuarioId = req.usuarioId as string
+
+    const disciplina = await disciplinasService.concluir(
+      usuarioId,
+      id,
+      notaFinal,
+      cargaHoraria
+    )
+    res.status(200).json(disciplina)
+  }catch(error: any){
+    res.status(403).json({mensagem: error.message})
   }
 }

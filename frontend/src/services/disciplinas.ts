@@ -13,6 +13,9 @@ interface Disciplina {
   professor: string | null;
   cor: string;
   periodo: string | null;
+  status: string;
+  notaFinal: number | null;
+  cargaHoraria: number | null;
   usuarioId: string;
   horarios: Horario[];
 }
@@ -25,8 +28,15 @@ interface DadosDisciplina {
   horarios?: Horario[];
 }
 
-export async function listar(): Promise<Disciplina[]> {
-  const resposta = await api.get("/disciplinas");
+interface DadosConclusao {
+  notaFinal: number;
+  cargaHoraria: number;
+}
+
+export async function listar(status?: string): Promise<Disciplina[]> {
+  const resposta = await api.get("/disciplinas", {
+    params: status ? { status } : {},
+  });
   return resposta.data;
 }
 
@@ -40,6 +50,14 @@ export async function editar(
   dados: DadosDisciplina
 ): Promise<Disciplina> {
   const resposta = await api.put(`/disciplinas/${id}`, dados);
+  return resposta.data;
+}
+
+export async function concluir(
+  id: string,
+  dados: DadosConclusao
+): Promise<Disciplina> {
+  const resposta = await api.patch(`/disciplinas/${id}/concluir`, dados);
   return resposta.data;
 }
 

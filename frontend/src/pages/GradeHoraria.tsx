@@ -56,7 +56,7 @@ export default function GradeHoraria() {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    disciplinasService.listar().then((dados) => {
+    disciplinasService.listar("cursando").then((dados) => {
       setDisciplinas(dados);
       setCarregando(false);
     });
