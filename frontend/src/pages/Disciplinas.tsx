@@ -18,6 +18,7 @@ interface Disciplina {
   status: string;
   notaFinal: number | null;
   cargaHoraria: number | null;
+  faltas: number;
   usuarioId: string;
   horarios: Horario[];
 }
@@ -49,6 +50,7 @@ export default function Disciplinas() {
   const [nome, setNome] = useState("");
   const [professor, setProfessor] = useState("");
   const [periodo, setPeriodo] = useState("");
+  const [cargaHoraria, setCargaHoraria] = useState("");
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
@@ -57,7 +59,6 @@ export default function Disciplinas() {
   );
   const [concluindoId, setConcluindoId] = useState<string | null>(null);
   const [notaFinal, setNotaFinal] = useState("");
-  const [cargaHoraria, setCargaHoraria] = useState("");
 
   useEffect(() => {
     carregarDisciplinas();
@@ -80,6 +81,7 @@ export default function Disciplinas() {
     setNome(disciplina.nome);
     setProfessor(disciplina.professor || "");
     setPeriodo(disciplina.periodo || "");
+    setCargaHoraria(disciplina.cargaHoraria ? String(disciplina.cargaHoraria) : "");
     setHorarios(
       disciplina.horarios.map((h) => ({
         diaSemana: h.diaSemana,
@@ -95,6 +97,7 @@ export default function Disciplinas() {
     setNome("");
     setProfessor("");
     setPeriodo("");
+    setCargaHoraria("");
     setHorarios([]);
   }
 
@@ -122,10 +125,17 @@ export default function Disciplinas() {
           nome,
           professor,
           periodo,
+          cargaHoraria: Number(cargaHoraria),
           horarios,
         });
       } else {
-        await disciplinasService.criar({ nome, professor, periodo, horarios });
+        await disciplinasService.criar({
+          nome,
+          professor,
+          periodo,
+          cargaHoraria: Number(cargaHoraria),
+          horarios,
+        });
       }
 
       cancelarEdicao();
@@ -157,7 +167,6 @@ export default function Disciplinas() {
   function iniciarConclusao(id: string) {
     setConcluindoId(id);
     setNotaFinal("");
-    setCargaHoraria("");
   }
 
   function cancelarConclusao() {
@@ -168,12 +177,22 @@ export default function Disciplinas() {
     try {
       await disciplinasService.concluir(id, {
         notaFinal: Number(notaFinal),
-        cargaHoraria: Number(cargaHoraria),
       });
       setConcluindoId(null);
       carregarDisciplinas();
     } catch {
       setErro("Não foi possível concluir a disciplina");
+    }
+  }
+
+  async function handleFalta(id: string, delta: number) {
+    try {
+      const atualizada = await disciplinasService.registrarFalta(id, delta);
+      setDisciplinas((atual) =>
+        atual.map((disciplina) => (disciplina.id === id ? atualizada : disciplina))
+      );
+    } catch {
+      setErro("Não foi possível atualizar as faltas");
     }
   }
 
@@ -185,6 +204,144 @@ export default function Disciplinas() {
         ? `${h.slotInicio}º horário`
         : `${h.slotInicio}º ao ${h.slotFim}º horário`;
     return `${dia} — ${turno} — ${slots}`;
+  }
+
+  function limiteFaltas(cargaHoraria: number): number {
+    return Math.floor(cargaHoraria * 0.25);
+  }
+
+  function corFaltas(faltas: number, cargaHoraria: number): string {
+    const limite = limiteFaltas(cargaHoraria);
+    if (faltas >= limite) return "text-red-400";
+    if (faltas >= limite * 0.75) return "text-amber-400";
+    return "text-gray-400";
+  }
+
+  function agruparPorPeriodo(lista: Disciplina[]): [string, Disciplina[]][] {
+    const grupos = new Map<string, Disciplina[]>();
+
+    for (const disciplina of lista) {
+      const chave = disciplina.periodo || "Período não informado";
+      if (!grupos.has(chave)) grupos.set(chave, []);
+      grupos.get(chave)!.push(disciplina);
+    }
+
+    return Array.from(grupos.entries()).sort(([a], [b]) => {
+      if (a === "Período não informado") return 1;
+      if (b === "Período não informado") return -1;
+      return b.localeCompare(a);
+    });
+  }
+
+  function renderCard(disciplina: Disciplina) {
+    return (
+      <div
+        key={disciplina.id}
+        className="bg-gray-800 border-l-4 rounded-lg p-4"
+        style={{ borderLeftColor: disciplina.cor }}
+      >
+        <Link
+          to={`/disciplinas/${disciplina.id}`}
+          className="font-medium text-white hover:text-blue-400"
+        >
+          {disciplina.nome}
+        </Link>
+        <p className="text-sm text-gray-400 mt-1">
+          {disciplina.professor || "Professor não informado"} —{" "}
+          {disciplina.periodo || "Período não informado"}
+        </p>
+
+        {aba === "concluida" ? (
+          <p className="text-sm text-gray-300 mt-2">
+            Nota final:{" "}
+            <span className="text-white font-medium">{disciplina.notaFinal}</span>
+            {" · "}Carga horária: {disciplina.cargaHoraria}h
+          </p>
+        ) : (
+          disciplina.horarios.length > 0 && (
+            <div className="mt-2 flex flex-col gap-1">
+              {disciplina.horarios.map((h, i) => (
+                <p key={i} className="text-xs text-gray-500">
+                  {formatarHorario(h)}
+                </p>
+              ))}
+            </div>
+          )
+        )}
+
+        {aba === "cursando" && disciplina.cargaHoraria && (
+          <div className="flex items-center gap-2 mt-2">
+            <p className={`text-sm ${corFaltas(disciplina.faltas, disciplina.cargaHoraria)}`}>
+              Faltas: {disciplina.faltas} de {limiteFaltas(disciplina.cargaHoraria)}
+            </p>
+            <button
+              onClick={() => handleFalta(disciplina.id, -1)}
+              className="text-xs text-gray-400 hover:text-white bg-gray-900 border border-gray-700 rounded-md w-5 h-5 flex items-center justify-center"
+            >
+              −
+            </button>
+            <button
+              onClick={() => handleFalta(disciplina.id, 1)}
+              className="text-xs text-gray-400 hover:text-white bg-gray-900 border border-gray-700 rounded-md w-5 h-5 flex items-center justify-center"
+            >
+              +
+            </button>
+          </div>
+        )}
+
+        <div className="flex gap-3 mt-3">
+          {aba === "cursando" && (
+            <>
+              <button
+                onClick={() => iniciarEdicao(disciplina)}
+                className="text-sm text-gray-400 hover:text-white"
+              >
+                Editar
+              </button>
+              <button
+                onClick={() => iniciarConclusao(disciplina.id)}
+                className="text-sm text-gray-400 hover:text-green-400"
+              >
+                Concluir
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => handleExcluir(disciplina.id)}
+            className="text-sm text-gray-400 hover:text-red-400"
+          >
+            Excluir
+          </button>
+        </div>
+
+        {concluindoId === disciplina.id && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 bg-gray-900 border border-gray-700 rounded-lg p-3">
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="10"
+              placeholder="Nota final"
+              value={notaFinal}
+              onChange={(evento) => setNotaFinal(evento.target.value)}
+              className="w-28 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+            <button
+              onClick={() => handleConcluir(disciplina.id)}
+              className="text-sm text-green-400 hover:text-green-300"
+            >
+              Confirmar
+            </button>
+            <button
+              onClick={cancelarConclusao}
+              className="text-sm text-gray-400 hover:text-white"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -221,7 +378,7 @@ export default function Disciplinas() {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Nome</label>
                 <input
@@ -248,6 +405,17 @@ export default function Disciplinas() {
                   type="text"
                   value={periodo}
                   onChange={(evento) => setPeriodo(evento.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Carga horária</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={cargaHoraria}
+                  onChange={(evento) => setCargaHoraria(evento.target.value)}
                   className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -383,104 +551,20 @@ export default function Disciplinas() {
             ? "Nenhuma disciplina cadastrada ainda."
             : "Nenhuma disciplina concluída ainda."}
         </p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {disciplinas.map((disciplina) => (
-            <div
-              key={disciplina.id}
-              className="bg-gray-800 border-l-4 rounded-lg p-4"
-              style={{ borderLeftColor: disciplina.cor }}
-            >
-              <Link
-                to={`/disciplinas/${disciplina.id}`}
-                className="font-medium text-white hover:text-blue-400"
-              >
-                {disciplina.nome}
-              </Link>
-              <p className="text-sm text-gray-400 mt-1">
-                {disciplina.professor || "Professor não informado"} —{" "}
-                {disciplina.periodo || "Período não informado"}
-              </p>
-
-              {aba === "concluida" ? (
-                <p className="text-sm text-gray-300 mt-2">
-                  Nota final:{" "}
-                  <span className="text-white font-medium">{disciplina.notaFinal}</span>
-                  {" · "}Carga horária: {disciplina.cargaHoraria}h
-                </p>
-              ) : (
-                disciplina.horarios.length > 0 && (
-                  <div className="mt-2 flex flex-col gap-1">
-                    {disciplina.horarios.map((h, i) => (
-                      <p key={i} className="text-xs text-gray-500">
-                        {formatarHorario(h)}
-                      </p>
-                    ))}
-                  </div>
-                )
-              )}
-
-              <div className="flex gap-3 mt-3">
-                {aba === "cursando" && (
-                  <>
-                    <button
-                      onClick={() => iniciarEdicao(disciplina)}
-                      className="text-sm text-gray-400 hover:text-white"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => iniciarConclusao(disciplina.id)}
-                      className="text-sm text-gray-400 hover:text-green-400"
-                    >
-                      Concluir
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={() => handleExcluir(disciplina.id)}
-                  className="text-sm text-gray-400 hover:text-red-400"
-                >
-                  Excluir
-                </button>
+      ) : aba === "concluida" ? (
+        <div className="flex flex-col gap-8">
+          {agruparPorPeriodo(disciplinas).map(([periodoNome, grupo]) => (
+            <div key={periodoNome}>
+              <h2 className="text-sm font-medium text-gray-400 mb-3">{periodoNome}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {grupo.map((disciplina) => renderCard(disciplina))}
               </div>
-
-              {concluindoId === disciplina.id && (
-                <div className="mt-3 flex flex-wrap items-center gap-2 bg-gray-900 border border-gray-700 rounded-lg p-3">
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="10"
-                    placeholder="Nota final"
-                    value={notaFinal}
-                    onChange={(evento) => setNotaFinal(evento.target.value)}
-                    className="w-28 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                  />
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="Carga horária"
-                    value={cargaHoraria}
-                    onChange={(evento) => setCargaHoraria(evento.target.value)}
-                    className="w-32 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                  />
-                  <button
-                    onClick={() => handleConcluir(disciplina.id)}
-                    className="text-sm text-green-400 hover:text-green-300"
-                  >
-                    Confirmar
-                  </button>
-                  <button
-                    onClick={cancelarConclusao}
-                    className="text-sm text-gray-400 hover:text-white"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              )}
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {disciplinas.map((disciplina) => renderCard(disciplina))}
         </div>
       )}
     </div>

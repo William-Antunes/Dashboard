@@ -16,6 +16,7 @@ interface Disciplina {
   status: string;
   notaFinal: number | null;
   cargaHoraria: number | null;
+  faltas: number;
   usuarioId: string;
   horarios: Horario[];
 }
@@ -25,12 +26,12 @@ interface DadosDisciplina {
   professor?: string;
   cor?: string;
   periodo?: string;
+  cargaHoraria: number;
   horarios?: Horario[];
 }
 
 interface DadosConclusao {
   notaFinal: number;
-  cargaHoraria: number;
 }
 
 export async function listar(status?: string): Promise<Disciplina[]> {
@@ -58,6 +59,14 @@ export async function concluir(
   dados: DadosConclusao
 ): Promise<Disciplina> {
   const resposta = await api.patch(`/disciplinas/${id}/concluir`, dados);
+  return resposta.data;
+}
+
+export async function registrarFalta(
+  id: string,
+  delta: number
+): Promise<Disciplina> {
+  const resposta = await api.patch(`/disciplinas/${id}/faltas`, { delta });
   return resposta.data;
 }
 
