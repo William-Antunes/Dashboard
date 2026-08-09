@@ -5,6 +5,7 @@ import * as trabalhosService from "../services/trabalhos";
 interface Disciplina {
   id: string;
   nome: string;
+  status: string;
 }
 
 interface Trabalho {
@@ -55,6 +56,10 @@ export default function Trabalhos() {
     const disciplina = disciplinas.find((d) => d.id === id);
     return disciplina ? disciplina.nome : "—";
   }
+
+  const disciplinasDisponiveis = disciplinas.filter(
+    (disciplina) => disciplina.status !== "concluida"
+  );
 
   function iniciarEdicao(trabalho: Trabalho) {
     setTrabalhoEditando(trabalho);
@@ -182,7 +187,9 @@ export default function Trabalhos() {
                     {nomeDaDisciplina(trabalho.disciplinaId)}
                   </td>
                   <td className="px-4 py-3 text-gray-400">
-                    {new Date(trabalho.dataEntrega).toLocaleDateString()}
+                    {new Date(trabalho.dataEntrega).toLocaleDateString("pt-BR", {
+                      timeZone: "UTC",
+                    })}
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -242,7 +249,7 @@ export default function Trabalhos() {
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
             >
               <option value="">Selecione uma disciplina</option>
-              {disciplinas.map((disciplina) => (
+              {disciplinasDisponiveis.map((disciplina) => (
                 <option key={disciplina.id} value={disciplina.id}>
                   {disciplina.nome}
                 </option>

@@ -5,6 +5,7 @@ import * as provasService from "../services/provas";
 interface Disciplina {
   id: string;
   nome: string;
+  status: string;
 }
 
 interface Prova {
@@ -48,6 +49,10 @@ export default function Provas() {
     const disciplina = disciplinas.find((d) => d.id === id);
     return disciplina ? disciplina.nome : "—";
   }
+
+  const disciplinasDisponiveis = disciplinas.filter(
+    (disciplina) => disciplina.status !== "concluida"
+  );
 
   function iniciarEdicao(prova: Prova) {
     setProvaEditando(prova);
@@ -155,7 +160,9 @@ export default function Provas() {
                     {nomeDaDisciplina(prova.disciplinaId)}
                   </td>
                   <td className="px-4 py-3 text-gray-400">
-                    {new Date(prova.data).toLocaleDateString()}
+                    {new Date(prova.data).toLocaleDateString("pt-BR", {
+                      timeZone: "UTC",
+                    })}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-3">
@@ -196,7 +203,7 @@ export default function Provas() {
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
             >
               <option value="">Selecione uma disciplina</option>
-              {disciplinas.map((disciplina) => (
+              {disciplinasDisponiveis.map((disciplina) => (
                 <option key={disciplina.id} value={disciplina.id}>
                   {disciplina.nome}
                 </option>

@@ -67,8 +67,8 @@ export default function Navbar() {
           </Link>
         </div>
 
-        <div className="hidden sm:flex items-center gap-3">
-          <span className="text-sm text-gray-400">Olá, {usuario?.nome}</span>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:inline text-sm text-gray-400">Olá, {usuario?.nome}</span>
 
           <div className="relative" ref={perfilRef}>
             <button
@@ -99,7 +99,7 @@ export default function Navbar() {
 
           <button
             onClick={logout}
-            className="text-sm text-gray-500 hover:text-red-400 ml-2"
+            className="hidden sm:inline text-sm text-gray-500 hover:text-red-400 ml-2"
           >
             Sair
           </button>
