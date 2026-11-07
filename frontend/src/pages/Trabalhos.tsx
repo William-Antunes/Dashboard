@@ -1,10 +1,13 @@
 import { useState, useEffect, type FormEvent } from "react";
 import * as disciplinasService from "../services/disciplinas";
 import * as trabalhosService from "../services/trabalhos";
+import Icone from "../components/Icone";
+import { descreverPrazo, diasAte, formatarData } from "../utils/datas";
 
 interface Disciplina {
   id: string;
   nome: string;
+  cor: string;
   status: string;
 }
 
@@ -23,6 +26,7 @@ export default function Trabalhos() {
   const [filtroDisciplinaId, setFiltroDisciplinaId] = useState("");
   const [carregando, setCarregando] = useState(true);
 
+  const [formAberto, setFormAberto] = useState(false);
   const [disciplinaId, setDisciplinaId] = useState("");
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -52,14 +56,27 @@ export default function Trabalhos() {
     }
   }
 
-  function nomeDaDisciplina(id: string): string {
-    const disciplina = disciplinas.find((d) => d.id === id);
-    return disciplina ? disciplina.nome : "—";
+  function disciplinaDe(id: string) {
+    return disciplinas.find((d) => d.id === id);
   }
 
   const disciplinasDisponiveis = disciplinas.filter(
     (disciplina) => disciplina.status !== "concluida"
   );
+
+  const pendentes = trabalhos
+    .filter((trabalho) => trabalho.status === "pendente")
+    .sort((a, b) => a.dataEntrega.localeCompare(b.dataEntrega));
+
+  const concluidos = trabalhos
+    .filter((trabalho) => trabalho.status !== "pendente")
+    .sort((a, b) => b.dataEntrega.localeCompare(a.dataEntrega));
+
+  function abrirNovoTrabalho() {
+    cancelarEdicao();
+    setDisciplinaId(filtroDisciplinaId);
+    setFormAberto(true);
+  }
 
   function iniciarEdicao(trabalho: Trabalho) {
     setTrabalhoEditando(trabalho);
@@ -67,6 +84,8 @@ export default function Trabalhos() {
     setTitulo(trabalho.titulo);
     setDescricao(trabalho.descricao || "");
     setDataEntrega(trabalho.dataEntrega.slice(0, 10));
+    setFormAberto(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function cancelarEdicao() {
@@ -75,6 +94,8 @@ export default function Trabalhos() {
     setTitulo("");
     setDescricao("");
     setDataEntrega("");
+    setErro("");
+    setFormAberto(false);
   }
 
   async function handleSubmit(evento: FormEvent) {
@@ -108,8 +129,8 @@ export default function Trabalhos() {
     } catch {
       setErro(
         trabalhoEditando
-          ? "Não foi possível editar o trabalho"
-          : "Não foi possível criar o trabalho"
+          ? "Não foi possível salvar as alterações. Confira o título e a data de entrega."
+          : "Não foi possível criar o trabalho. Confira o título e a data de entrega."
       );
     }
   }
@@ -138,183 +159,195 @@ export default function Trabalhos() {
     }
   }
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-2xl font-semibold text-white mb-6">Trabalhos</h1>
+  function renderLinha(trabalho: Trabalho) {
+    const pendente = trabalho.status === "pendente";
+    const disciplina = disciplinaDe(trabalho.disciplinaId);
+    const dias = diasAte(trabalho.dataEntrega);
 
-      <div className="mb-6">
-        <label className="block text-sm text-gray-300 mb-1">
-          Filtrar por disciplina
-        </label>
-        <select
-          value={filtroDisciplinaId}
-          onChange={(evento) => setFiltroDisciplinaId(evento.target.value)}
-          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+    return (
+      <li key={trabalho.id} className="group flex items-start gap-3 px-4 py-3">
+        <button
+          onClick={() => pendente && handleConcluir(trabalho.id)}
+          disabled={!pendente}
+          className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border transition-colors ${
+            pendente
+              ? "border-lapis/60 hover:border-tinta hover:bg-tinta/10"
+              : "border-transparent bg-lapis/30"
+          }`}
+          aria-label={pendente ? `Concluir ${trabalho.titulo}` : `${trabalho.titulo} concluído`}
+          title={pendente ? "Marcar como concluído" : "Concluído"}
         >
-          <option value="">Todas as disciplinas</option>
-          {disciplinas.map((disciplina) => (
-            <option key={disciplina.id} value={disciplina.id}>
-              {disciplina.nome}
-            </option>
-          ))}
-        </select>
-      </div>
+          {!pendente && <Icone nome="check" tamanho={12} />}
+        </button>
 
-      {carregando ? (
-        <p className="text-gray-400 mb-8">Carregando...</p>
-      ) : trabalhos.length === 0 ? (
-        <p className="text-gray-400 mb-8">Nenhum trabalho cadastrado.</p>
-      ) : (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-x-auto mb-8">
-          <table className="w-full text-sm min-w-[600px]">
-            <thead>
-              <tr className="border-b border-gray-700 text-left text-gray-400">
-                <th className="px-4 py-3 font-medium">Título</th>
-                <th className="px-4 py-3 font-medium">Disciplina</th>
-                <th className="px-4 py-3 font-medium">Entrega</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trabalhos.map((trabalho) => (
-                <tr
-                  key={trabalho.id}
-                  className="border-b border-gray-700 last:border-0"
-                >
-                  <td className="px-4 py-3 text-white">{trabalho.titulo}</td>
-                  <td className="px-4 py-3 text-gray-400">
-                    {nomeDaDisciplina(trabalho.disciplinaId)}
-                  </td>
-                  <td className="px-4 py-3 text-gray-400">
-                    {new Date(trabalho.dataEntrega).toLocaleDateString("pt-BR", {
-                      timeZone: "UTC",
-                    })}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-md ${
-                        trabalho.status === "pendente"
-                          ? "bg-amber-500/10 text-amber-400"
-                          : "bg-green-500/10 text-green-400"
-                      }`}
-                    >
-                      {trabalho.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-3">
-                      {trabalho.status === "pendente" && (
-                        <button
-                          onClick={() => handleConcluir(trabalho.id)}
-                          className="text-blue-400 hover:text-blue-300"
-                        >
-                          Concluir
-                        </button>
-                      )}
-                      <button
-                        onClick={() => iniciarEdicao(trabalho)}
-                        className="text-gray-400 hover:text-white"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleExcluir(trabalho.id)}
-                        className="text-gray-400 hover:text-red-400"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-        <h2 className="text-base font-medium text-white mb-4">
-          {trabalhoEditando ? "Editar trabalho" : "Novo trabalho"}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">
-              Disciplina
-            </label>
-            <select
-              value={disciplinaId}
-              onChange={(evento) => setDisciplinaId(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-            >
-              <option value="">Selecione uma disciplina</option>
-              {disciplinasDisponiveis.map((disciplina) => (
-                <option key={disciplina.id} value={disciplina.id}>
-                  {disciplina.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">Título</label>
-            <input
-              type="text"
-              value={titulo}
-              onChange={(evento) => setTitulo(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+        <div className="min-w-0 flex-1">
+          <p className={`text-sm font-medium ${pendente ? "" : "text-lapis line-through"}`}>
+            {trabalho.titulo}
+          </p>
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-lapis">
+            <span
+              className="h-1.5 w-1.5 shrink-0 rounded-full"
+              style={{ backgroundColor: disciplina?.cor ?? "rgb(var(--lapis))" }}
+              aria-hidden="true"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">
-              Descrição
-            </label>
-            <input
-              type="text"
-              value={descricao}
-              onChange={(evento) => setDescricao(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">
-              Data de entrega
-            </label>
-            <input
-              type="date"
-              value={dataEntrega}
-              onChange={(evento) => setDataEntrega(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          {erro && (
-            <p className="col-span-1 sm:col-span-2 text-sm text-red-400">{erro}</p>
-          )}
-
-          <div className="col-span-1 sm:col-span-2 flex gap-3">
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              {trabalhoEditando ? "Salvar alterações" : "Criar trabalho"}
+            <span className="truncate">{disciplina?.nome ?? "Disciplina removida"}</span>
+          </p>
+          <div className="mt-2 flex gap-4">
+            <button onClick={() => iniciarEdicao(trabalho)} className="botao-texto text-xs">
+              Editar
             </button>
+            <button onClick={() => handleExcluir(trabalho.id)} className="botao-perigo text-xs">
+              Excluir
+            </button>
+          </div>
+        </div>
 
-            {trabalhoEditando && (
-              <button
-                type="button"
-                onClick={cancelarEdicao}
-                className="text-gray-400 hover:text-white px-4 py-2"
+        <div className="shrink-0 text-right">
+          {pendente && (
+            <p className={`numeros text-sm ${dias <= 3 ? "font-medium text-urgente" : ""}`}>
+              {descreverPrazo(dias)}
+            </p>
+          )}
+          <p className="numeros text-xs text-lapis">{formatarData(trabalho.dataEntrega)}</p>
+        </div>
+      </li>
+    );
+  }
+
+  return (
+    <div>
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="titulo-pagina">Trabalhos</h1>
+          <p className="mt-1 text-lapis">
+            {pendentes.length === 0
+              ? "Nada pendente"
+              : `${pendentes.length} ${pendentes.length === 1 ? "pendente" : "pendentes"}`}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={filtroDisciplinaId}
+            onChange={(evento) => setFiltroDisciplinaId(evento.target.value)}
+            className="campo h-9 w-auto py-0"
+            aria-label="Filtrar por disciplina"
+          >
+            <option value="">Todas as disciplinas</option>
+            {disciplinas.map((disciplina) => (
+              <option key={disciplina.id} value={disciplina.id}>
+                {disciplina.nome}
+              </option>
+            ))}
+          </select>
+          {!formAberto && (
+            <button onClick={abrirNovoTrabalho} className="botao botao-primario">
+              <Icone nome="mais" tamanho={16} />
+              Novo trabalho
+            </button>
+          )}
+        </div>
+      </header>
+
+      {formAberto && (
+        <section className="painel mb-8 p-5 sm:p-6">
+          <h2 className="titulo-secao mb-5">
+            {trabalhoEditando ? "Editar trabalho" : "Novo trabalho"}
+          </h2>
+
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="disciplina" className="rotulo">Disciplina</label>
+              <select
+                id="disciplina"
+                value={disciplinaId}
+                onChange={(evento) => setDisciplinaId(evento.target.value)}
+                className="campo"
               >
+                <option value="">Selecione uma disciplina</option>
+                {disciplinasDisponiveis.map((disciplina) => (
+                  <option key={disciplina.id} value={disciplina.id}>
+                    {disciplina.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="titulo" className="rotulo">Título</label>
+              <input
+                id="titulo"
+                type="text"
+                value={titulo}
+                onChange={(evento) => setTitulo(evento.target.value)}
+                placeholder="Relatório do laboratório 3"
+                className="campo"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="descricao" className="rotulo">Descrição</label>
+              <input
+                id="descricao"
+                type="text"
+                value={descricao}
+                onChange={(evento) => setDescricao(evento.target.value)}
+                className="campo"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="entrega" className="rotulo">Data de entrega</label>
+              <input
+                id="entrega"
+                type="date"
+                value={dataEntrega}
+                onChange={(evento) => setDataEntrega(evento.target.value)}
+                className="campo"
+              />
+            </div>
+
+            {erro && <p className="erro sm:col-span-2">{erro}</p>}
+
+            <div className="flex gap-2 sm:col-span-2">
+              <button type="submit" className="botao botao-primario">
+                {trabalhoEditando ? "Salvar alterações" : "Criar trabalho"}
+              </button>
+              <button type="button" onClick={cancelarEdicao} className="botao botao-secundario">
                 Cancelar
               </button>
-            )}
-          </div>
-        </form>
-      </div>
+            </div>
+          </form>
+        </section>
+      )}
+
+      {erro && !formAberto && <p className="erro mb-4">{erro}</p>}
+
+      {carregando ? (
+        <p className="text-sm text-lapis">Carregando...</p>
+      ) : trabalhos.length === 0 ? (
+        <div className="painel px-6 py-10 text-center">
+          <p className="font-medium">Nenhum trabalho cadastrado</p>
+          <p className="mt-1 text-sm text-lapis">
+            Cadastre trabalhos para acompanhar os prazos na semana da página inicial.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-8">
+          {pendentes.length > 0 && (
+            <section>
+              <h2 className="mb-2 text-sm font-medium text-lapis">Pendentes</h2>
+              <ul className="painel lista">{pendentes.map(renderLinha)}</ul>
+            </section>
+          )}
+          {concluidos.length > 0 && (
+            <section>
+              <h2 className="mb-2 text-sm font-medium text-lapis">Concluídos</h2>
+              <ul className="painel lista">{concluidos.map(renderLinha)}</ul>
+            </section>
+          )}
+        </div>
+      )}
     </div>
   );
 }

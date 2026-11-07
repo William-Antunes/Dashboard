@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import * as provasService from "../services/provas";
+import Icone from "../components/Icone";
 
 export default function NovaProva() {
   const { id } = useParams<{ id: string }>();
@@ -25,53 +26,57 @@ export default function NovaProva() {
 
       navigate(`/disciplinas/${id}`);
     } catch {
-      setErro("Não foi possível criar a prova");
+      setErro("Não foi possível criar a prova. Confira o nome e a data.");
     }
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-md">
       <Link
         to={`/disciplinas/${id}`}
-        className="text-sm text-gray-400 hover:text-white mb-4 inline-block"
+        className="botao-texto mb-6 inline-flex items-center gap-1.5"
       >
-        ← Voltar
+        <Icone nome="voltar" tamanho={16} />
+        Voltar para a disciplina
       </Link>
 
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-        <h1 className="text-xl font-semibold text-white mb-4">Nova prova</h1>
+      <h1 className="titulo-pagina mb-8">Nova prova</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">Nome</label>
-            <input
-              type="text"
-              value={nome}
-              onChange={(evento) => setNome(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <label htmlFor="nome" className="rotulo">Nome</label>
+          <input
+            id="nome"
+            type="text"
+            value={nome}
+            onChange={(evento) => setNome(evento.target.value)}
+            placeholder="P1"
+            className="campo"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">Data</label>
-            <input
-              type="date"
-              value={data}
-              onChange={(evento) => setData(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-            />
-          </div>
+        <div>
+          <label htmlFor="data" className="rotulo">Data</label>
+          <input
+            id="data"
+            type="date"
+            value={data}
+            onChange={(evento) => setData(evento.target.value)}
+            className="campo"
+          />
+        </div>
 
-          {erro && <p className="text-sm text-red-400">{erro}</p>}
+        {erro && <p className="erro">{erro}</p>}
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg transition-colors"
-          >
+        <div className="mt-2 flex gap-2">
+          <button type="submit" className="botao botao-primario">
             Criar prova
           </button>
-        </form>
-      </div>
+          <Link to={`/disciplinas/${id}`} className="botao botao-secundario">
+            Cancelar
+          </Link>
+        </div>
+      </form>
     </div>
   );
 }

@@ -2,117 +2,192 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Tokens de cor (valores RGB separados por espaço, para o Tailwind
+  conseguir aplicar opacidade, ex: bg-tinta/10).
 
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
+  papel    fundo da página
+  folha    superfícies: painéis, campos
+  realce   hover e item ativo
+  linha    bordas e a grade milimetrada
+  grafite  texto principal
+  lapis    texto secundário
+  tinta    acento: só ação principal, foco e link ativo
+  urgente  prazo de 3 dias ou menos, faltas no limite, erros
+*/
+@layer base {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+    --papel: 247 248 250;
+    --folha: 255 255 255;
+    --realce: 239 241 245;
+    --linha: 226 229 235;
+    --grafite: 23 25 30;
+    --lapis: 101 108 124;
+    --tinta: 52 70 212;
+    --sobre-tinta: 255 255 255;
+    --urgente: 200 52 52;
+    color-scheme: light;
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  :root.dark {
+    --papel: 22 24 29;
+    --folha: 29 32 38;
+    --realce: 38 42 50;
+    --linha: 44 48 57;
+    --grafite: 232 234 238;
+    --lapis: 142 148 163;
+    --tinta: 141 153 255;
+    --sobre-tinta: 22 24 29;
+    --urgente: 240 114 114;
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-papel font-sans text-grafite antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--tinta));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: rgb(var(--tinta) / 0.2);
   }
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
+@layer components {
+  .titulo-pagina {
+    font-size: 28px;
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
 
-body {
-  background-color: #111827;
-  color: #f3f4f6;
-  min-height: 100vh;
-}
+  .titulo-secao {
+    font-size: 16px;
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
+  /* Versão estreita da Instrument Sans (eixo de largura da fonte) */
+  .condensado {
+    font-stretch: 75%;
+  }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+  .numeros {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .painel {
+    @apply rounded-painel border border-linha bg-folha;
+  }
+
+  .papel-milimetrado {
+    background-color: rgb(var(--folha));
+    background-image:
+      linear-gradient(rgb(var(--linha) / 0.6) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--linha) / 0.6) 1px, transparent 1px);
+    background-size: 16px 16px;
+    background-position: -1px -1px;
+  }
+
+  /* Marca do app: um quadradinho de papel milimetrado em tinta */
+  .marca {
+    @apply rounded-[5px] bg-tinta;
+    background-image:
+      linear-gradient(rgb(var(--sobre-tinta) / 0.35) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--sobre-tinta) / 0.35) 1px, transparent 1px);
+    background-size: 6px 6px;
+    background-position: 2px 2px;
+  }
+
+  .rotulo {
+    @apply mb-1.5 block text-sm font-medium text-grafite;
+  }
+
+  .campo {
+    @apply w-full rounded-controle border border-linha bg-folha px-3 py-2 text-sm text-grafite transition-colors placeholder:text-lapis/70;
+  }
+
+  .campo:focus {
+    @apply border-tinta outline-none;
+    box-shadow: 0 0 0 3px rgb(var(--tinta) / 0.15);
+  }
+
+  .campo-compacto {
+    @apply w-auto px-2 py-1;
+  }
+
+  .botao {
+    @apply inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-controle px-3.5 text-sm font-medium transition-colors;
+  }
+
+  .botao-primario {
+    @apply bg-tinta text-sobre-tinta hover:bg-tinta/90;
+  }
+
+  .botao-secundario {
+    @apply border border-linha bg-folha text-grafite hover:bg-realce;
+  }
+
+  .botao-texto {
+    @apply text-sm text-lapis transition-colors hover:text-grafite;
+  }
+
+  .botao-perigo {
+    @apply text-sm text-lapis transition-colors hover:text-urgente;
+  }
+
+  .botao-icone {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-controle text-lapis transition-colors hover:bg-realce hover:text-grafite;
+  }
+
+  .link {
+    @apply text-tinta underline-offset-2 hover:underline;
+  }
+
+  .erro {
+    @apply text-sm text-urgente;
+  }
+
+  /* Linha de lista no estilo Linear */
+  .lista > * + * {
+    @apply border-t border-linha;
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+
+/* A única animação automática do app: os itens da faixa da semana chegando */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
-p {
-  margin: 0;
+
+.surgir {
+  animation: surgir 320ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
+@media (prefers-reduced-motion: reduce) {
+  .surgir {
+    animation: none;
+  }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  * {
+    transition-duration: 0ms !important;
+  }
 }

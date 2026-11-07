@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import * as trabalhosService from "../services/trabalhos";
+import Icone from "../components/Icone";
 
 export default function NovoTrabalho() {
   const { id } = useParams<{ id: string }>();
@@ -27,67 +28,68 @@ export default function NovoTrabalho() {
 
       navigate(`/disciplinas/${id}`);
     } catch {
-      setErro("Não foi possível criar o trabalho");
+      setErro("Não foi possível criar o trabalho. Confira o título e a data de entrega.");
     }
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-md">
       <Link
         to={`/disciplinas/${id}`}
-        className="text-sm text-gray-400 hover:text-white mb-4 inline-block"
+        className="botao-texto mb-6 inline-flex items-center gap-1.5"
       >
-        ← Voltar
+        <Icone nome="voltar" tamanho={16} />
+        Voltar para a disciplina
       </Link>
 
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-        <h1 className="text-xl font-semibold text-white mb-4">Novo trabalho</h1>
+      <h1 className="titulo-pagina mb-8">Novo trabalho</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">Título</label>
-            <input
-              type="text"
-              value={titulo}
-              onChange={(evento) => setTitulo(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <label htmlFor="titulo" className="rotulo">Título</label>
+          <input
+            id="titulo"
+            type="text"
+            value={titulo}
+            onChange={(evento) => setTitulo(evento.target.value)}
+            placeholder="Relatório do laboratório 3"
+            className="campo"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">
-              Descrição
-            </label>
-            <input
-              type="text"
-              value={descricao}
-              onChange={(evento) => setDescricao(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
+        <div>
+          <label htmlFor="descricao" className="rotulo">Descrição</label>
+          <input
+            id="descricao"
+            type="text"
+            value={descricao}
+            onChange={(evento) => setDescricao(evento.target.value)}
+            className="campo"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">
-              Data de entrega
-            </label>
-            <input
-              type="date"
-              value={dataEntrega}
-              onChange={(evento) => setDataEntrega(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-            />
-          </div>
+        <div>
+          <label htmlFor="entrega" className="rotulo">Data de entrega</label>
+          <input
+            id="entrega"
+            type="date"
+            value={dataEntrega}
+            onChange={(evento) => setDataEntrega(evento.target.value)}
+            className="campo"
+          />
+        </div>
 
-          {erro && <p className="text-sm text-red-400">{erro}</p>}
+        {erro && <p className="erro">{erro}</p>}
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg transition-colors"
-          >
+        <div className="mt-2 flex gap-2">
+          <button type="submit" className="botao botao-primario">
             Criar trabalho
           </button>
-        </form>
-      </div>
+          <Link to={`/disciplinas/${id}`} className="botao botao-secundario">
+            Cancelar
+          </Link>
+        </div>
+      </form>
     </div>
   );
 }

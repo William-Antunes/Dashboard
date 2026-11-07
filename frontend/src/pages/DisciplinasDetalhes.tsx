@@ -3,6 +3,17 @@ import { useParams, Link } from "react-router-dom";
 import * as disciplinasService from "../services/disciplinas";
 import * as trabalhosService from "../services/trabalhos";
 import * as provasService from "../services/provas";
+import Icone from "../components/Icone";
+import MedidorFaltas from "../components/MedidorFaltas";
+import { descreverPrazo, diasAte, formatarData } from "../utils/datas";
+import { fundoDaCor, resumirHorario } from "../utils/disciplinas";
+
+interface Horario {
+  diaSemana: number;
+  turno: string;
+  slotInicio: number;
+  slotFim: number;
+}
 
 interface Disciplina {
   id: string;
@@ -10,6 +21,10 @@ interface Disciplina {
   professor: string | null;
   cor: string;
   periodo: string | null;
+  status: string;
+  cargaHoraria: number | null;
+  faltas: number;
+  horarios: Horario[];
 }
 
 interface Trabalho {
@@ -81,123 +96,159 @@ export default function DisciplinaDetalhes() {
   }
 
   if (carregando) {
-    return <p className="p-6 text-gray-400">Carregando...</p>;
+    return <p className="text-sm text-lapis">Carregando...</p>;
   }
 
-  if (erro) {
+  if (erro || !disciplina) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <p className="text-red-400 mb-4">{erro}</p>
-        <Link to="/disciplinas" className="text-blue-400 hover:text-blue-300">
-          Voltar para Disciplinas
+      <div>
+        <p className="erro mb-4">{erro}</p>
+        <Link to="/disciplinas" className="link text-sm">
+          Voltar para disciplinas
         </Link>
       </div>
     );
   }
 
+  const trabalhosOrdenados = [...trabalhos].sort((a, b) => {
+    if (a.status !== b.status) return a.status === "pendente" ? -1 : 1;
+    return a.dataEntrega.localeCompare(b.dataEntrega);
+  });
+
+  const provasOrdenadas = [...provas].sort((a, b) => a.data.localeCompare(b.data));
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div>
       <Link
         to="/disciplinas"
-        className="text-sm text-gray-400 hover:text-white mb-4 inline-block"
+        className="botao-texto mb-6 inline-flex items-center gap-1.5"
       >
-        ← Voltar para Disciplinas
+        <Icone nome="voltar" tamanho={16} />
+        Disciplinas
       </Link>
 
-      <div
-        className="bg-gray-800 border-l-4 rounded-lg p-5 mb-8"
-        style={{ borderLeftColor: disciplina?.cor }}
+      <header
+        className="mb-10 border-l-4 pl-5"
+        style={{ borderLeftColor: disciplina.cor }}
       >
-        <h1 className="text-xl font-semibold text-white">{disciplina?.nome}</h1>
-        <p className="text-sm text-gray-400 mt-1">
-          {disciplina?.professor || "Professor não informado"} —{" "}
-          {disciplina?.periodo || "Período não informado"}
+        <h1 className="titulo-pagina">{disciplina.nome}</h1>
+        <p className="mt-1 text-lapis">
+          {disciplina.professor || "Professor não informado"}
+          {disciplina.periodo ? `, período ${disciplina.periodo}` : ""}
         </p>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-medium text-white">Trabalhos</h2>
+        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+          {disciplina.status === "cursando" && disciplina.cargaHoraria ? (
+            <MedidorFaltas faltas={disciplina.faltas} cargaHoraria={disciplina.cargaHoraria} largura="w-32" />
+          ) : null}
+          {disciplina.horarios.length > 0 && (
+            <p className="text-xs text-lapis">
+              {disciplina.horarios.map(resumirHorario).join("  /  ")}
+            </p>
+          )}
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-6">
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="titulo-secao">Trabalhos</h2>
             <Link
               to={`/disciplinas/${id}/trabalhos/novo`}
-              className="text-sm text-blue-400 hover:text-blue-300"
+              className="botao botao-secundario h-8 px-2.5"
             >
-              + Novo trabalho
+              <Icone nome="mais" tamanho={14} />
+              Novo trabalho
             </Link>
           </div>
 
-          {trabalhos.length === 0 ? (
-            <p className="text-sm text-gray-400">Nenhum trabalho cadastrado.</p>
+          {trabalhosOrdenados.length === 0 ? (
+            <p className="text-sm text-lapis">Nenhum trabalho cadastrado nesta disciplina.</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {trabalhos.map((trabalho) => (
-                <div
-                  key={trabalho.id}
-                  className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">
-                      {trabalho.titulo}
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-md ${
-                        trabalho.status === "pendente"
-                          ? "bg-amber-500/10 text-amber-400"
-                          : "bg-green-500/10 text-green-400"
-                      }`}
-                    >
-                      {trabalho.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Entrega: {new Date(trabalho.dataEntrega).toLocaleDateString()}
-                  </p>
-                  {trabalho.status === "pendente" && (
-                    <button
-                      onClick={() => handleConcluir(trabalho.id)}
-                      className="text-xs text-blue-400 hover:text-blue-300 mt-2"
-                    >
-                      Concluir
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+            <ul className="painel lista">
+              {trabalhosOrdenados.map((trabalho) => {
+                const pendente = trabalho.status === "pendente";
+                const dias = diasAte(trabalho.dataEntrega);
 
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-medium text-white">Provas</h2>
+                return (
+                  <li key={trabalho.id} className="flex items-start gap-3 px-4 py-3">
+                    <button
+                      onClick={() => pendente && handleConcluir(trabalho.id)}
+                      disabled={!pendente}
+                      className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border transition-colors ${
+                        pendente
+                          ? "border-lapis/60 hover:border-tinta hover:bg-tinta/10"
+                          : "border-transparent bg-lapis/30 text-folha"
+                      }`}
+                      aria-label={pendente ? `Concluir ${trabalho.titulo}` : `${trabalho.titulo} concluído`}
+                      title={pendente ? "Marcar como concluído" : "Concluído"}
+                    >
+                      {!pendente && <Icone nome="check" tamanho={12} className="text-grafite" />}
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-sm font-medium ${pendente ? "" : "text-lapis line-through"}`}>
+                        {trabalho.titulo}
+                      </p>
+                      {trabalho.descricao && (
+                        <p className="mt-0.5 text-xs text-lapis">{trabalho.descricao}</p>
+                      )}
+                    </div>
+                    <div className="shrink-0 text-right">
+                      {pendente && (
+                        <p className={`numeros text-xs ${dias <= 3 ? "font-medium text-urgente" : "text-grafite"}`}>
+                          {descreverPrazo(dias)}
+                        </p>
+                      )}
+                      <p className="numeros text-xs text-lapis">{formatarData(trabalho.dataEntrega)}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="titulo-secao">Provas</h2>
             <Link
               to={`/disciplinas/${id}/provas/novo`}
-              className="text-sm text-blue-400 hover:text-blue-300"
+              className="botao botao-secundario h-8 px-2.5"
             >
-              + Nova prova
+              <Icone nome="mais" tamanho={14} />
+              Nova prova
             </Link>
           </div>
 
-          {provas.length === 0 ? (
-            <p className="text-sm text-gray-400">Nenhuma prova cadastrada.</p>
+          {provasOrdenadas.length === 0 ? (
+            <p className="text-sm text-lapis">Nenhuma prova cadastrada nesta disciplina.</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {provas.map((prova) => (
-                <div
-                  key={prova.id}
-                  className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3"
-                >
-                  <span className="text-sm font-medium text-white">
-                    {prova.nome}
-                  </span>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Data: {new Date(prova.data).toLocaleDateString()}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <ul className="painel lista">
+              {provasOrdenadas.map((prova) => {
+                const dias = diasAte(prova.data);
+                const realizada = dias < 0;
+
+                return (
+                  <li key={prova.id} className={`flex items-center gap-3 px-4 py-3 ${realizada ? "text-lapis" : ""}`}>
+                    <span
+                      className="condensado numeros flex h-10 w-10 shrink-0 items-center justify-center rounded-controle text-lg font-semibold"
+                      style={realizada ? undefined : { backgroundColor: fundoDaCor(disciplina.cor, 18) }}
+                    >
+                      {Number(prova.data.slice(8, 10))}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{prova.nome}</p>
+                      <p className="numeros text-xs text-lapis">{formatarData(prova.data)}</p>
+                    </div>
+                    <p className={`numeros shrink-0 text-xs ${!realizada && dias <= 3 ? "font-medium text-urgente" : "text-lapis"}`}>
+                      {realizada ? "realizada" : descreverPrazo(dias)}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );

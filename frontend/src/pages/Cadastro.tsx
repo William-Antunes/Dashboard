@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import * as authService from "../services/auth";
+import TelaAcesso from "../components/TelaAcesso";
 
 export default function Cadastro() {
   const [nome, setNome] = useState("");
@@ -19,67 +20,67 @@ export default function Cadastro() {
       navigate("/login");
     } catch (erroCapturado: any) {
       const mensagem =
-        erroCapturado.response?.data?.mensagem || "Não foi possível cadastrar";
+        erroCapturado.response?.data?.mensagem || "Não foi possível criar a conta";
       setErro(mensagem);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-gray-800 border border-gray-700 rounded-xl p-8">
-        <h1 className="text-xl font-semibold text-white mb-1">Criar conta</h1>
-        <p className="text-sm text-gray-400 mb-6">
-          Comece a organizar sua faculdade
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">Nome</label>
-            <input
-              type="text"
-              value={nome}
-              onChange={(evento) => setNome(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(evento) => setEmail(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">Senha</label>
-            <input
-              type="password"
-              value={senha}
-              onChange={(evento) => setSenha(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          {erro && <p className="text-sm text-red-400">{erro}</p>}
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg transition-colors"
-          >
-            Cadastrar
-          </button>
-        </form>
-
-        <p className="text-sm text-gray-400 mt-6 text-center">
+    <TelaAcesso
+      titulo="Criar conta"
+      descricao="Organize as matérias do período em poucos minutos."
+      rodape={
+        <>
           Já tem uma conta?{" "}
-          <Link to="/login" className="text-blue-400 hover:text-blue-300">
+          <Link to="/login" className="link">
             Entrar
           </Link>
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <label htmlFor="nome" className="rotulo">Nome</label>
+          <input
+            id="nome"
+            type="text"
+            autoComplete="name"
+            value={nome}
+            onChange={(evento) => setNome(evento.target.value)}
+            className="campo"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="rotulo">Email</label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(evento) => setEmail(evento.target.value)}
+            className="campo"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="senha" className="rotulo">Senha</label>
+          <input
+            id="senha"
+            type="password"
+            autoComplete="new-password"
+            value={senha}
+            onChange={(evento) => setSenha(evento.target.value)}
+            className="campo"
+          />
+        </div>
+
+        {erro && <p className="erro">{erro}</p>}
+
+        <button type="submit" className="botao botao-primario mt-2 w-full">
+          Criar conta
+        </button>
+      </form>
+    </TelaAcesso>
   );
 }

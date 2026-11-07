@@ -1,10 +1,14 @@
 import { useState, useEffect, type FormEvent } from "react";
 import * as disciplinasService from "../services/disciplinas";
 import * as provasService from "../services/provas";
+import Icone from "../components/Icone";
+import { dataLocal, descreverPrazo, diasAte, mesCurto } from "../utils/datas";
+import { fundoDaCor } from "../utils/disciplinas";
 
 interface Disciplina {
   id: string;
   nome: string;
+  cor: string;
   status: string;
 }
 
@@ -21,6 +25,7 @@ export default function Provas() {
   const [filtroDisciplinaId, setFiltroDisciplinaId] = useState("");
   const [carregando, setCarregando] = useState(true);
 
+  const [formAberto, setFormAberto] = useState(false);
   const [disciplinaId, setDisciplinaId] = useState("");
   const [nome, setNome] = useState("");
   const [data, setData] = useState("");
@@ -45,20 +50,35 @@ export default function Provas() {
     }
   }
 
-  function nomeDaDisciplina(id: string): string {
-    const disciplina = disciplinas.find((d) => d.id === id);
-    return disciplina ? disciplina.nome : "—";
+  function disciplinaDe(id: string) {
+    return disciplinas.find((d) => d.id === id);
   }
 
   const disciplinasDisponiveis = disciplinas.filter(
     (disciplina) => disciplina.status !== "concluida"
   );
 
+  const proximas = provas
+    .filter((prova) => diasAte(prova.data) >= 0)
+    .sort((a, b) => a.data.localeCompare(b.data));
+
+  const realizadas = provas
+    .filter((prova) => diasAte(prova.data) < 0)
+    .sort((a, b) => b.data.localeCompare(a.data));
+
+  function abrirNovaProva() {
+    cancelarEdicao();
+    setDisciplinaId(filtroDisciplinaId);
+    setFormAberto(true);
+  }
+
   function iniciarEdicao(prova: Prova) {
     setProvaEditando(prova);
     setDisciplinaId(prova.disciplinaId);
     setNome(prova.nome);
     setData(prova.data.slice(0, 10));
+    setFormAberto(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function cancelarEdicao() {
@@ -66,6 +86,8 @@ export default function Provas() {
     setDisciplinaId("");
     setNome("");
     setData("");
+    setErro("");
+    setFormAberto(false);
   }
 
   async function handleSubmit(evento: FormEvent) {
@@ -93,8 +115,8 @@ export default function Provas() {
     } catch {
       setErro(
         provaEditando
-          ? "Não foi possível editar a prova"
-          : "Não foi possível criar a prova"
+          ? "Não foi possível salvar as alterações. Confira o nome e a data."
+          : "Não foi possível criar a prova. Confira o nome e a data."
       );
     }
   }
@@ -112,149 +134,167 @@ export default function Provas() {
     }
   }
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-2xl font-semibold text-white mb-6">Provas</h1>
+  function renderLinha(prova: Prova) {
+    const disciplina = disciplinaDe(prova.disciplinaId);
+    const dias = diasAte(prova.data);
+    const realizada = dias < 0;
+    const dataDaProva = dataLocal(prova.data);
 
-      <div className="mb-6">
-        <label className="block text-sm text-gray-300 mb-1">
-          Filtrar por disciplina
-        </label>
-        <select
-          value={filtroDisciplinaId}
-          onChange={(evento) => setFiltroDisciplinaId(evento.target.value)}
-          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+    return (
+      <li key={prova.id} className="flex items-center gap-4 px-4 py-3">
+        <div
+          className={`flex w-12 shrink-0 flex-col items-center rounded-controle py-1.5 ${realizada ? "bg-realce text-lapis" : ""}`}
+          style={realizada || !disciplina ? undefined : { backgroundColor: fundoDaCor(disciplina.cor, 18) }}
         >
-          <option value="">Todas as disciplinas</option>
-          {disciplinas.map((disciplina) => (
-            <option key={disciplina.id} value={disciplina.id}>
-              {disciplina.nome}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {carregando ? (
-        <p className="text-gray-400 mb-8">Carregando...</p>
-      ) : provas.length === 0 ? (
-        <p className="text-gray-400 mb-8">Nenhuma prova cadastrada.</p>
-      ) : (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-x-auto mb-8">
-          <table className="w-full text-sm min-w-[500px]">
-            <thead>
-              <tr className="border-b border-gray-700 text-left text-gray-400">
-                <th className="px-4 py-3 font-medium">Nome</th>
-                <th className="px-4 py-3 font-medium">Disciplina</th>
-                <th className="px-4 py-3 font-medium">Data</th>
-                <th className="px-4 py-3 font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {provas.map((prova) => (
-                <tr
-                  key={prova.id}
-                  className="border-b border-gray-700 last:border-0"
-                >
-                  <td className="px-4 py-3 text-white">{prova.nome}</td>
-                  <td className="px-4 py-3 text-gray-400">
-                    {nomeDaDisciplina(prova.disciplinaId)}
-                  </td>
-                  <td className="px-4 py-3 text-gray-400">
-                    {new Date(prova.data).toLocaleDateString("pt-BR", {
-                      timeZone: "UTC",
-                    })}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => iniciarEdicao(prova)}
-                        className="text-gray-400 hover:text-white"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleExcluir(prova.id)}
-                        className="text-gray-400 hover:text-red-400"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <span className="condensado numeros text-[22px] font-semibold leading-none">
+            {dataDaProva.getDate()}
+          </span>
+          <span className="mt-0.5 text-[11px] text-lapis">{mesCurto(dataDaProva)}</span>
         </div>
-      )}
 
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-        <h2 className="text-base font-medium text-white mb-4">
-          {provaEditando ? "Editar prova" : "Nova prova"}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">
-              Disciplina
-            </label>
-            <select
-              value={disciplinaId}
-              onChange={(evento) => setDisciplinaId(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-            >
-              <option value="">Selecione uma disciplina</option>
-              {disciplinasDisponiveis.map((disciplina) => (
-                <option key={disciplina.id} value={disciplina.id}>
-                  {disciplina.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">Nome</label>
-            <input
-              type="text"
-              value={nome}
-              onChange={(evento) => setNome(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-300 mb-1">Data</label>
-            <input
-              type="date"
-              value={data}
-              onChange={(evento) => setData(evento.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          {erro && (
-            <p className="col-span-1 sm:col-span-3 text-sm text-red-400">{erro}</p>
-          )}
-
-          <div className="col-span-1 sm:col-span-3 flex gap-3">
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              {provaEditando ? "Salvar alterações" : "Criar prova"}
+        <div className="min-w-0 flex-1">
+          <p className={`truncate text-sm font-medium ${realizada ? "text-lapis" : ""}`}>{prova.nome}</p>
+          <p className="truncate text-xs text-lapis">{disciplina?.nome ?? "Disciplina removida"}</p>
+          <div className="mt-1.5 flex gap-4">
+            <button onClick={() => iniciarEdicao(prova)} className="botao-texto text-xs">
+              Editar
             </button>
+            <button onClick={() => handleExcluir(prova.id)} className="botao-perigo text-xs">
+              Excluir
+            </button>
+          </div>
+        </div>
 
-            {provaEditando && (
-              <button
-                type="button"
-                onClick={cancelarEdicao}
-                className="text-gray-400 hover:text-white px-4 py-2"
+        <p className={`numeros shrink-0 text-sm ${!realizada && dias <= 3 ? "font-medium text-urgente" : "text-lapis"}`}>
+          {realizada ? "realizada" : descreverPrazo(dias)}
+        </p>
+      </li>
+    );
+  }
+
+  return (
+    <div>
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="titulo-pagina">Provas</h1>
+          <p className="mt-1 text-lapis">
+            {proximas.length === 0
+              ? "Nenhuma prova marcada"
+              : `Próxima ${descreverPrazo(diasAte(proximas[0].data))}`}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={filtroDisciplinaId}
+            onChange={(evento) => setFiltroDisciplinaId(evento.target.value)}
+            className="campo h-9 w-auto py-0"
+            aria-label="Filtrar por disciplina"
+          >
+            <option value="">Todas as disciplinas</option>
+            {disciplinas.map((disciplina) => (
+              <option key={disciplina.id} value={disciplina.id}>
+                {disciplina.nome}
+              </option>
+            ))}
+          </select>
+          {!formAberto && (
+            <button onClick={abrirNovaProva} className="botao botao-primario">
+              <Icone nome="mais" tamanho={16} />
+              Nova prova
+            </button>
+          )}
+        </div>
+      </header>
+
+      {formAberto && (
+        <section className="painel mb-8 p-5 sm:p-6">
+          <h2 className="titulo-secao mb-5">
+            {provaEditando ? "Editar prova" : "Nova prova"}
+          </h2>
+
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label htmlFor="disciplina" className="rotulo">Disciplina</label>
+              <select
+                id="disciplina"
+                value={disciplinaId}
+                onChange={(evento) => setDisciplinaId(evento.target.value)}
+                className="campo"
               >
+                <option value="">Selecione uma disciplina</option>
+                {disciplinasDisponiveis.map((disciplina) => (
+                  <option key={disciplina.id} value={disciplina.id}>
+                    {disciplina.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="nome" className="rotulo">Nome</label>
+              <input
+                id="nome"
+                type="text"
+                value={nome}
+                onChange={(evento) => setNome(evento.target.value)}
+                placeholder="P1"
+                className="campo"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="data" className="rotulo">Data</label>
+              <input
+                id="data"
+                type="date"
+                value={data}
+                onChange={(evento) => setData(evento.target.value)}
+                className="campo"
+              />
+            </div>
+
+            {erro && <p className="erro sm:col-span-3">{erro}</p>}
+
+            <div className="flex gap-2 sm:col-span-3">
+              <button type="submit" className="botao botao-primario">
+                {provaEditando ? "Salvar alterações" : "Criar prova"}
+              </button>
+              <button type="button" onClick={cancelarEdicao} className="botao botao-secundario">
                 Cancelar
               </button>
-            )}
-          </div>
-        </form>
-      </div>
+            </div>
+          </form>
+        </section>
+      )}
+
+      {erro && !formAberto && <p className="erro mb-4">{erro}</p>}
+
+      {carregando ? (
+        <p className="text-sm text-lapis">Carregando...</p>
+      ) : provas.length === 0 ? (
+        <div className="painel px-6 py-10 text-center">
+          <p className="font-medium">Nenhuma prova cadastrada</p>
+          <p className="mt-1 text-sm text-lapis">
+            Cadastre as datas das provas para vê-las na semana da página inicial.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-8">
+          {proximas.length > 0 && (
+            <section>
+              <h2 className="mb-2 text-sm font-medium text-lapis">Próximas</h2>
+              <ul className="painel lista">{proximas.map(renderLinha)}</ul>
+            </section>
+          )}
+          {realizadas.length > 0 && (
+            <section>
+              <h2 className="mb-2 text-sm font-medium text-lapis">Realizadas</h2>
+              <ul className="painel lista">{realizadas.map(renderLinha)}</ul>
+            </section>
+          )}
+        </div>
+      )}
     </div>
   );
 }

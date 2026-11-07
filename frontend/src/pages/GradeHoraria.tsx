@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { Link } from "react-router-dom";
 import * as disciplinasService from "../services/disciplinas";
+import { fundoDaCor } from "../utils/disciplinas";
 
 interface Horario {
   diaSemana: number;
@@ -17,12 +18,12 @@ interface Disciplina {
 }
 
 const DIAS = [
-  { valor: 2, nome: "Segunda" },
-  { valor: 3, nome: "Terça" },
-  { valor: 4, nome: "Quarta" },
-  { valor: 5, nome: "Quinta" },
-  { valor: 6, nome: "Sexta" },
-  { valor: 7, nome: "Sábado" },
+  { valor: 2, nome: "Segunda", curto: "Seg" },
+  { valor: 3, nome: "Terça", curto: "Ter" },
+  { valor: 4, nome: "Quarta", curto: "Qua" },
+  { valor: 5, nome: "Quinta", curto: "Qui" },
+  { valor: 6, nome: "Sexta", curto: "Sex" },
+  { valor: 7, nome: "Sábado", curto: "Sáb" },
 ];
 
 const HORARIOS_POR_TURNO: Record<string, { slot: number; inicio: string; fim: string }[]> = {
@@ -56,10 +57,10 @@ export default function GradeHoraria() {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    disciplinasService.listar("cursando").then((dados) => {
-      setDisciplinas(dados);
-      setCarregando(false);
-    });
+    disciplinasService
+      .listar("cursando")
+      .then(setDisciplinas)
+      .finally(() => setCarregando(false));
   }, []);
 
   function disciplinaNaCelula(
@@ -82,64 +83,112 @@ export default function GradeHoraria() {
     return null;
   }
 
+  // Esconde turnos sem nenhuma aula, para a grade não ficar com linhas vazias
+  const turnosComAula = (["M", "T", "N"] as const).filter((turno) =>
+    disciplinas.some((d) => d.horarios.some((h) => h.turno === turno))
+  );
+
+  // getDay(): 0 = domingo, então segunda = 1 vira diaSemana 2
+  const diaSemanaHoje = new Date().getDay() + 1;
+
   if (carregando) {
-    return <p className="p-6 text-gray-400">Carregando...</p>;
+    return <p className="text-sm text-lapis">Carregando...</p>;
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-2xl font-semibold text-white mb-6">Grade Horária</h1>
+    <div>
+      <header className="mb-8">
+        <h1 className="titulo-pagina">Grade horária</h1>
+        <p className="mt-1 text-lapis">
+          Montada a partir dos horários de cada disciplina em andamento.
+        </p>
+      </header>
 
-      <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-x-auto">
-        <table className="w-full table-fixed text-sm min-w-[700px]">
-          <thead>
-            <tr className="border-b border-gray-700 text-gray-400">
-              <th className="px-3 py-2 text-left">Horário</th>
-              {DIAS.map((dia) => (
-                <th key={dia.valor} className="px-3 py-2 text-left">
-                  {dia.nome}
+      {turnosComAula.length === 0 ? (
+        <div className="painel px-6 py-10 text-center">
+          <p className="font-medium">Sua grade está vazia</p>
+          <p className="mt-1 text-sm text-lapis">
+            Adicione horários às suas{" "}
+            <Link to="/disciplinas" className="link">
+              disciplinas
+            </Link>{" "}
+            e elas aparecem aqui.
+          </p>
+        </div>
+      ) : (
+        <div className="papel-milimetrado overflow-x-auto rounded-painel border border-linha">
+          <table className="w-full min-w-[720px] table-fixed border-collapse text-sm">
+            <thead>
+              <tr>
+                <th className="w-[104px] border-b border-linha bg-folha px-3 py-2.5 text-left text-xs font-medium text-lapis">
+                  <span className="sr-only">Horário</span>
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {(["M", "T", "N"] as const).map((turno) => (
-              <>
-                <tr key={`turno-${turno}`} className="bg-gray-900">
-                  <td colSpan={7} className="px-3 py-1 text-xs text-gray-500 font-medium">
-                    {NOME_TURNO[turno]}
-                  </td>
-                </tr>
-                {HORARIOS_POR_TURNO[turno].map((h) => (
-                  <tr key={`${turno}-${h.slot}`} className="border-b border-gray-700 last:border-0">
-                    <td className="px-3 py-2 text-gray-400 whitespace-nowrap">
-                      {h.inicio} – {h.fim}
-                    </td>
-                    {DIAS.map((dia) => {
-                      const disciplina = disciplinaNaCelula(dia.valor, turno, h.slot);
-                      return (
-                        <td key={dia.valor} className="px-3 py-2">
-                          {disciplina ? (
-                            <Link
-                              to={`/disciplinas/${disciplina.id}`}
-                              className="block rounded-md px-2 py-1 text-xs font-medium text-white hover:opacity-80 transition-opacity"
-                              style={{ backgroundColor: disciplina.cor }}
-                            >
-                              {disciplina.nome}
-                            </Link>
-                          ) : (
-                            <span className="text-gray-700">—</span>
-                          )}
-                        </td>
-                      );
-                    })}
+                {DIAS.map((dia) => {
+                  const ehHoje = dia.valor === diaSemanaHoje;
+                  return (
+                    <th
+                      key={dia.valor}
+                      className={`border-b border-l border-linha bg-folha px-3 py-2.5 text-left text-xs font-medium ${
+                        ehHoje ? "text-tinta shadow-[inset_0_2px_0_rgb(var(--tinta))]" : "text-lapis"
+                      }`}
+                    >
+                      <abbr title={dia.nome} className="no-underline">
+                        {dia.curto}
+                      </abbr>
+                      {ehHoje && <span className="ml-1.5 font-normal">hoje</span>}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {turnosComAula.map((turno) => (
+                <Fragment key={turno}>
+                  <tr>
+                    <th
+                      colSpan={7}
+                      scope="colgroup"
+                      className="border-b border-linha bg-papel/80 px-3 py-1.5 text-left text-xs font-medium text-lapis"
+                    >
+                      {NOME_TURNO[turno]}
+                    </th>
                   </tr>
-                ))}
-              </>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  {HORARIOS_POR_TURNO[turno].map((h) => (
+                    <tr key={`${turno}-${h.slot}`}>
+                      <th
+                        scope="row"
+                        className="whitespace-nowrap border-b border-linha bg-folha/70 px-3 py-1.5 text-left text-xs font-normal text-lapis"
+                      >
+                        <span className="numeros">{h.inicio}</span>
+                        <span className="numeros block text-[11px] opacity-70">{h.fim}</span>
+                      </th>
+                      {DIAS.map((dia) => {
+                        const disciplina = disciplinaNaCelula(dia.valor, turno, h.slot);
+                        return (
+                          <td key={dia.valor} className="h-12 border-b border-l border-linha p-1">
+                            {disciplina && (
+                              <Link
+                                to={`/disciplinas/${disciplina.id}`}
+                                className="flex h-full items-center rounded-[4px] border-l-[3px] px-2 text-xs font-medium leading-tight transition-[filter] hover:brightness-95 dark:hover:brightness-110"
+                                style={{
+                                  borderLeftColor: disciplina.cor,
+                                  backgroundColor: fundoDaCor(disciplina.cor, 18),
+                                }}
+                              >
+                                <span className="line-clamp-2">{disciplina.nome}</span>
+                              </Link>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
